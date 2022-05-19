@@ -18,6 +18,7 @@ class PerfumeScraper:
     def __init__(self, url): 
         self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver") 
         self.url = url
+        self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
 
     def open_webpage(self, url):
         self.driver.get(url)
@@ -173,6 +174,28 @@ class PerfumeScraper:
             product_dictionary['complete'] = 'False'
         return(product_dictionary)
 
+    def scrape_add(self, list, original_dict):
+        for url in list:
+            perfume = self.scrape_product(url)
+            original_dict["href"].append(perfume["href"])
+            original_dict["complete"].append(perfume["complete"])
+            original_dict["uuid"].append(perfume["uuid"])
+            original_dict["name"].append(perfume["name"])
+            original_dict["id"].append(perfume["id"])
+            original_dict["price"].append(perfume["price"])
+            original_dict["strength"].append(perfume["strength"])
+            original_dict["category"].append(perfume["category"])
+            original_dict["brand"].append(perfume["brand"])
+            original_dict["flavours"].append(perfume["flavours"])
+            original_dict["top notes"].append(perfume["top notes"])
+            original_dict["heart notes"].append(perfume["heart notes"])
+            original_dict["base notes"].append(perfume["base notes"])
+            original_dict["image link"].append(perfume["image link"])
+        return original_dict
+
+    def test_dict(self):
+        return self.dict
+
     def download_image(self, url, file_name, dir_path):
         self.driver.get(url) 
         time.sleep(1)
@@ -201,6 +224,13 @@ class PerfumeScraper:
             else:
                 pass
 
-            
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
+    my_scraper.open_webpage("https://bloomperfume.co.uk/collections/perfumes")
+    filepath='/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/'
+    link_list = my_scraper.get_multiple_links(number_pages=5)
+    test_dict = my_scraper.test_dict()
+    perfume_dict = my_scraper.scrape_add(link_list, test_dict)
+    my_scraper.dump_json(filepath, perfume_dict,'Sample_Perfume_Dict.json')
+    my_scraper.downloads_multiple_img(link_list, filepath)
+    my_scraper.close_webpage()
