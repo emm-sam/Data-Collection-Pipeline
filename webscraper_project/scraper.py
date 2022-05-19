@@ -5,6 +5,11 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.keys import Keys
 import uuid
+import os
+import json
+import urllib.request
+import urllib3.exceptions
+import requests
 
 class PerfumeScraper: 
    
@@ -168,5 +173,24 @@ class PerfumeScraper:
             product_dictionary['complete'] = 'False'
         return(product_dictionary)
 
+    def download_image(self, url, file_name, dir_path):
+        self.driver.get(url) 
+        time.sleep(1)
+        try:
+            im_link = self.driver.find_element(By.XPATH, '//*[@id="product_pic_1"]')
+            i_link = im_link.find_element(By.TAG_NAME, 'img')
+            image_link = i_link.get_attribute('src')
+            self.driver.implicitly_wait(2)
+            self.driver.get(image_link)
+            full_path = dir_path + file_name + '.jpg'
+            urllib.request.urlretrieve(image_link, full_path)
+        except NoSuchElementException:
+            pass
+
+    def dump_json(self, filepath, dict, dict_name):
+        with open(os.path.join(filepath, dict_name), mode='w') as f:
+            json.dump(dict, f)
+
+    
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
