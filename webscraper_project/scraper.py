@@ -71,5 +71,13 @@ class PerfumeScraper:
             pass
         return link_list
 
+    def get_multiple_links(self, number_pages):
+        all_links = []
+        for i in range(1, (number_pages+1), 1):
+            paged_url = self.url + "?page=" + str(i)
+            list_i = self.get_links(paged_url)
+            all_links += list_i
+        return all_links
+
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
