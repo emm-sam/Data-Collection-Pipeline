@@ -11,6 +11,7 @@ import urllib.request
 import urllib3.exceptions
 import requests
 import boto3
+import botocore
 from sqlalchemy import create_engine, table
 import pandas as pd
 import psycopg2
@@ -318,6 +319,113 @@ class PerfumeScraper:
         table_data = pd.read_sql_table('PerfumeScraper', self.engine)
         # pd.read_sql_query('''SELECT * FROM actor LIMIT 10''', engine)
         return table_data
+
+    def key_exists(self, mykey, mybucket):
+        # s3_client = boto3.client('s3')
+        try:
+            response = self.s3.list_objects_v2(Bucket=mybucket, Prefix=mykey)
+            if response:
+                for obj in response['Contents']:
+                    if mykey == obj['Key']:
+                        return True
+        except:
+            return False
+            pass
+
+    def run_scraper(self, filepath, no_pages):
+        # scrapes the urls of all the products 
+        url_links = self.get_multiple_links(no_pages) #42 
+
+        # creates a list of hrefs from the scraped urls (contains all possible hrefs)
+        href_list = []
+        for x in url_links:
+            text = str(x)
+            href = text.split("s/")
+            href_list.append(href[1])
+        
+        # inspects the cloud database and produces a list of hrefs stored
+        rds_df = self.inspect_rds(table = 'PerfumeScraper')
+        rds_href_list = rds_df['href'].tolist()
+
+        rds_unscraped_url = []
+        rds_unscraped_href = []
+        for x in href_list:
+            if x not in rds_href_list:
+                stem = 'https://bloomperfume.co.uk/products/'
+                url = stem + str(x)
+                rds_unscraped_url.append(url)
+                rds_unscraped_href.append(x)
+
+        print('rds unscraped:', len(rds_unscraped_href))
+        # upload existing database (hardcopy)
+        existing_dict = self.open_json('/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/Sample_Perfume_Dict.json')
+        
+        # scrape the new list and add to empty dictionary
+        extra_dict = self.scrape_add(rds_unscraped_url, self.dict)
+        if extra_dict == True:
+            if existing_dict == True:
+                total_dict = self.add_dict(existing_dict, extra_dict)
+                self.dump_json(filepath, total_dict, 'Sample_Perfume_Dict.json')
+       
+        # cleans the 
+        clean_df = self.data_clean(extra_dict)
+        self.update_table_rds(data_frame=clean_df, table_name='PerfumeScraper')
+
+        # checks the href against the hardcopy of dictionary 
+        # ex_dc = existing_dict['href']
+        # unscraped_url_local = []
+        # unscraped_href_local = []
+        # for x in href_list:
+        #     if x not in ex_dc:
+        #         stem = 'https://bloomperfume.co.uk/products/'
+        #         url = stem + str(x)
+        #         unscraped_url_local.append(url)
+        #         unscraped_href_local.append(x)
+        # perf_dict = self.scrape_add(unscraped_url_local, existing_dict)
+
+        s3_noimg = []
+        for x in href_list:
+            key = str(x) + '.jpg'
+            result = self.key_exists(mykey=key, mybucket='imagebucketaic')
+            if result == False:
+                stem = 'https://bloomperfume.co.uk/products/'
+                url = stem + str(x)
+                s3_noimg.append(url)
+            else:
+                pass
+        print("not on s3: ", len(s3_noimg))
+        print(s3_noimg)
+
+        if len(s3_noimg) > 1:
+            self.downloads_multiple_img(list=s3_noimg, dir_path=filepath)
+        elif len(s3_noimg) == 1:
+            print('needs single download')
+            print(s3_noimg)
+        else:
+            pass
+
+        no_img = []
+        for x in rds_unscraped_href:
+            full_path = filepath + str(x) + '.jpg'
+            if os.path.exists(full_path) == False:
+                # print(full_path)
+                stem = 'https://bloomperfume.co.uk/products/'
+                url = stem + str(x)
+                no_img.append(url)
+                # self.download_image(url=url, file_name=href, dir_path=filepath)
+        print("no_img:", len(no_img))
+
+        if len(no_img) > 1:
+            self.downloads_multiple_img(list=no_img, dir_path=filepath)
+        elif len(no_img) == 1:
+            print('needs single download')
+            print(no_img)
+        else:
+            pass
+          
+        # self.uploadDirectory(filepath)
+        print("----------------------")
+        self.close_webpage()
 
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
