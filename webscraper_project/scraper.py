@@ -7,6 +7,8 @@ from selenium.webdriver.common.keys import Keys
 
 class PerfumeScraper: 
    
+
+   # FOR WEBSITE NAVIGATION
     def __init__(self, url): 
         self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver") 
         self.url = url
@@ -54,6 +56,20 @@ class PerfumeScraper:
     def get_scroll_height(self):
         current_height = self.driver.execute_script("return window.pageYOffset + window.innerHeight")
         return current_height
-        
+
+    def get_links(self, url):
+        self.open_webpage(url)
+        time.sleep(1)
+        try:
+            product_container = self.driver.find_element(By.XPATH, '//div[@class="products-list"]')
+            prod_list = product_container.find_elements(By.CLASS_NAME, "product-name")
+            link_list = [] 
+            for p in prod_list:
+                href = p.get_attribute("href")
+                link_list.append(href)
+        except:
+            pass
+        return link_list
+
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
