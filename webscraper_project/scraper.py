@@ -19,6 +19,18 @@ class PerfumeScraper:
         except NoSuchElementException:
             pass
 
+    def close_webpage(self):
+        self.driver.quit()
+
+    def go_back(self):
+        self.driver.back()
+
+    def get_current_url(self):
+        return self.driver.current_url
+
+    def search_website(self, input:str):
+        url = 'https://bloomperfume.co.uk/search?q=' + input
+        self.driver.get(url)
 
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
