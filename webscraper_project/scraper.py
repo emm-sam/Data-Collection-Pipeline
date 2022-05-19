@@ -244,6 +244,15 @@ class PerfumeScraper:
             for file in files:
                 self.s3.upload_file(os.path.join(root,file),bucket,file)
 
+    def update_databse_rds(self, data_frame, table_name):
+        self.engine.connect()
+        data_frame.to_sql(table_name, self.engine, if_exists='replace')
+
+    def update_table_rds(self, data_frame, table_name):
+        self.engine.connect()
+        data_frame.to_sql(table_name, con = self.engine, if_exists = 'append')
+
+
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
     my_scraper.open_webpage("https://bloomperfume.co.uk/collections/perfumes")
