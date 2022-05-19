@@ -3,6 +3,7 @@ import time
 from time import sleep
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.keys import Keys
 
 class PerfumeScraper: 
    
@@ -32,5 +33,27 @@ class PerfumeScraper:
         url = 'https://bloomperfume.co.uk/search?q=' + input
         self.driver.get(url)
 
+    def scroll_down(self, no_seconds):
+        start_time = time.time()
+        while (time.time() - start_time) < no_seconds:
+            self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.DOWN)
+        else:
+            pass
+    
+    def scroll_up(self, no_seconds):
+        start_time2 = time.time()
+        while (time.time() - start_time2) < no_seconds:
+            self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.PAGE_UP)
+        else:
+            pass
+
+    def get_full_height(self):
+        total_height = str(self.driver.execute_script("return document.body.scrollHeight"))
+        return total_height
+        
+    def get_scroll_height(self):
+        current_height = self.driver.execute_script("return window.pageYOffset + window.innerHeight")
+        return current_height
+        
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
