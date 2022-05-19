@@ -12,10 +12,11 @@ import urllib3.exceptions
 import requests
 import boto3
 from sqlalchemy import create_engine, table
+import pandas as pd
+import psycopg2
+from sqlalchemy import inspect
 
 class PerfumeScraper: 
-   
-
    
     def __init__(self, url): 
         self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver") 
@@ -207,7 +208,7 @@ class PerfumeScraper:
             original_dict["image link"].append(perfume["image link"])
         return original_dict
 
-    def test_dict(self):
+    def make_test_dict(self):
         return self.dict
 
     def download_image(self, url, file_name, dir_path):
@@ -238,6 +239,65 @@ class PerfumeScraper:
         with open(os.path.join(filepath, dict_name), mode='w') as f:
             json.dump(dict, f)
 
+    def data_clean(self, dictionary):
+        def split_rename(df_column, new_name_stem):
+            new_df = pd.DataFrame(df_column.tolist())
+            column_list = new_df.columns
+
+            def create_mapper(list, string):
+                length = len(list)
+                dict = {}
+                for i in range(length):
+                    no = str(i)
+                    dictvalue = string + no
+                    dict[i] = dictvalue
+                return dict
+            mapper = create_mapper(list=column_list, string=new_name_stem)
+            renamed_df = new_df.rename(mapper=mapper, axis=1)
+            return renamed_df
+
+        df1 = pd.DataFrame.from_dict(dictionary, orient='index')
+        df1 = df1.transpose()
+    
+        # data cleaning - strength and volume columns 
+        df1['strength'] = df1['strength'].str.split('/')
+        sub1 = pd.DataFrame(df1['strength'].tolist())
+        sub1 = sub1.rename({0:'volume', 1:'strengths'}, axis=1)
+        sub1['volume'] = sub1['volume'].str.replace('m','')
+        sub1['volume'] = sub1['volume'].str.replace('l','')
+        sub1['volume'] = sub1['volume'].str.replace(' ','')
+        sub1['strengths'] = sub1['strengths'].str.replace('Extrait de Parfum', 'EdP')
+        sub1['strengths'] = sub1['strengths'].str.replace('Parfum', 'Extrait')
+        if sub1['volume'].empty:
+            sub1['volume'] = sub1['volume'].astype(float)
+
+        df2 = pd.concat([df1, sub1], axis=1)
+
+        df2.drop(columns=['id'], inplace=True)
+        df2.drop(columns=['category'], inplace=True)
+        df2.drop(columns=['strength'], inplace=True)
+        df2['price'] = df2['price'].str.replace('£','')
+        if df2['price'].empty:
+            df2['price'] = df2['price'].astype(float)   
+    
+        column_order = ['href', 'uuid', 'name', 'price', 'volume', 'strengths', 'brand', 'flavours', 'top notes',
+       'heart notes', 'base notes', 'image link']
+        df2 = df2.reindex(columns=column_order)
+
+        subf = split_rename(df2['flavours'], 'F')
+        subtn = split_rename(df2['top notes'], 'TN')
+        subhn = split_rename(df2['heart notes'], 'HN')
+        subbn = split_rename(df2['base notes'], 'BN')
+
+        df3 = pd.concat([df2, subf, subtn, subhn, subbn], axis=1)
+        # clean_dict = df3.to_dict()
+        return df3
+
+    def open_json(self, file_path):
+        with open(file_path, mode='r') as f:
+            data = json.load(f)
+            return data
+
     def uploadDirectory(self, dir_path):
         bucket = self.bucket
         for (root, dirs, files) in os.walk(dir_path):
@@ -252,13 +312,19 @@ class PerfumeScraper:
         self.engine.connect()
         data_frame.to_sql(table_name, con = self.engine, if_exists = 'append')
 
+    def inspect_rds(self, table):
+        self.engine.connect()
+        # table = 'PerfumeScraper'
+        table_data = pd.read_sql_table('PerfumeScraper', self.engine)
+        # pd.read_sql_query('''SELECT * FROM actor LIMIT 10''', engine)
+        return table_data
 
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
     my_scraper.open_webpage("https://bloomperfume.co.uk/collections/perfumes")
     # filepath='/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/'
     # link_list = my_scraper.get_multiple_links(number_pages=5)
-    # test_dict = my_scraper.test_dict()
+    # test_dict = my_scraper.make_test_dict()
     # perfume_dict = my_scraper.scrape_add(link_list, test_dict)
     # my_scraper.dump_json(filepath, perfume_dict,'Sample_Perfume_Dict.json')
     # my_scraper.downloads_multiple_img(link_list, filepath)
