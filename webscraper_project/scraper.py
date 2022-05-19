@@ -10,15 +10,29 @@ import json
 import urllib.request
 import urllib3.exceptions
 import requests
+import boto3
+from sqlalchemy import create_engine, table
 
 class PerfumeScraper: 
    
 
-   # FOR WEBSITE NAVIGATION
+   
     def __init__(self, url): 
         self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver") 
         self.url = url
         self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
+        self.s3 = boto3.client('s3')
+        self.bucket = 'imagebucketaic'
+        DATABASE_TYPE = 'postgresql'
+        DBAPI = 'psycopg2'
+        DATABASE = 'postgres'
+        ENDPOINT = input('RDS endpoint: ') # Change it for your AWS endpoint
+        USER = input('User: ')
+        PASSWORD = input('Password: ') #password for the rds database NOT pgadmin4 
+        PORT = input('Port: ')
+        self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
+        
+    # FOR WEBSITE NAVIGATION
 
     def open_webpage(self, url):
         self.driver.get(url)
@@ -210,10 +224,6 @@ class PerfumeScraper:
         except NoSuchElementException:
             pass
 
-    def dump_json(self, filepath, dict, dict_name):
-        with open(os.path.join(filepath, dict_name), mode='w') as f:
-            json.dump(dict, f)
-
     def downloads_multiple_img(self, list, dir_path):
         for url in list:
             split = url.split("s/")
@@ -224,13 +234,23 @@ class PerfumeScraper:
             else:
                 pass
 
+    def dump_json(self, filepath, dict, dict_name):
+        with open(os.path.join(filepath, dict_name), mode='w') as f:
+            json.dump(dict, f)
+
+    def uploadDirectory(self, dir_path):
+        bucket = self.bucket
+        for (root, dirs, files) in os.walk(dir_path):
+            for file in files:
+                self.s3.upload_file(os.path.join(root,file),bucket,file)
+
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
     my_scraper.open_webpage("https://bloomperfume.co.uk/collections/perfumes")
-    filepath='/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/'
-    link_list = my_scraper.get_multiple_links(number_pages=5)
-    test_dict = my_scraper.test_dict()
-    perfume_dict = my_scraper.scrape_add(link_list, test_dict)
-    my_scraper.dump_json(filepath, perfume_dict,'Sample_Perfume_Dict.json')
-    my_scraper.downloads_multiple_img(link_list, filepath)
+    # filepath='/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/'
+    # link_list = my_scraper.get_multiple_links(number_pages=5)
+    # test_dict = my_scraper.test_dict()
+    # perfume_dict = my_scraper.scrape_add(link_list, test_dict)
+    # my_scraper.dump_json(filepath, perfume_dict,'Sample_Perfume_Dict.json')
+    # my_scraper.downloads_multiple_img(link_list, filepath)
     my_scraper.close_webpage()
