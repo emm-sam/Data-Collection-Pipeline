@@ -191,6 +191,16 @@ class PerfumeScraper:
         with open(os.path.join(filepath, dict_name), mode='w') as f:
             json.dump(dict, f)
 
-    
+    def downloads_multiple_img(self, list, dir_path):
+        for url in list:
+            split = url.split("s/")
+            href = split[1]
+            full_path = dir_path + href +'.jpg'
+            if os.path.exists(full_path) == False:
+                self.download_image(url=url, file_name=href, dir_path=dir_path)
+            else:
+                pass
+
+            
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
