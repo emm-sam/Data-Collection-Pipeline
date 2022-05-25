@@ -46,4 +46,13 @@ class ScraperTestCase(unittest.TestCase):
         end = float(self.instance.get_scroll_height())
         self.assertTrue(end < start)
         pass
-    
+
+    def test_go_back(self):
+        self.instance.open_webpage(self.url)
+        test_url = self.stem + '/products/ibiza-nights'
+        self.instance.open_webpage(test_url)
+        self.instance.go_back()
+        original_page = self.instance.get_current_url()
+        self.assertTrue(original_page == self.url)
+
+        
