@@ -78,4 +78,12 @@ class ScraperTestCase(unittest.TestCase):
         for a in actual_value:
             split = a.split("/p")
             self.assertMultiLineEqual(split[0], self.stem)
-        pass
+    
+    def test_scrape_product(self):
+        test_url = self.stem + "/products/ibiza-nights"
+        actual_value = self.instance.scrape_product(test_url)
+        self.assertTrue(type(actual_value) == dict)
+        # self.assertTrue(len(actual_value.keys()) == 13)
+        self.assertTrue(type(actual_value['href']) == str)
+        self.assertMultiLineEqual(actual_value['href'], "ibiza-nights")
+        
