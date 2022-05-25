@@ -1,5 +1,7 @@
 import unittest
 from webscraper_project.scraper import PerfumeScraper
+import os.path
+import uuid
 
 class ScraperTestCase(unittest.TestCase):
     @classmethod
@@ -8,19 +10,17 @@ class ScraperTestCase(unittest.TestCase):
         cls.instance = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
         cls.url = "https://bloomperfume.co.uk/collections/perfumes"
         cls.stem = "https://bloomperfume.co.uk"
-        pass
+        cls.test_filepath = '/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data2/download_test/'
 
     @classmethod
     def tearDownClass(cls):
         cls.instance.close_webpage()
-        pass
 
     def test_open_webpage(self):
         test_value = self.url
         self.instance.open_webpage(test_value)
         actual_value = str(self.instance.get_current_url())
         self.assertMultiLineEqual(test_value, actual_value)
-        pass
 
     def test_search_website(self):
         test_value = self.stem + "/search?q=product"
@@ -28,7 +28,6 @@ class ScraperTestCase(unittest.TestCase):
         self.instance.search_website(string)
         actual_value = str(self.instance.get_current_url())
         self.assertMultiLineEqual(test_value, actual_value)
-        pass
 
     def test_scroll_down(self):
         self.instance.open_webpage(self.url)
@@ -36,7 +35,6 @@ class ScraperTestCase(unittest.TestCase):
         self.instance.scroll_down(4)
         end = float(self.instance.get_scroll_height())
         self.assertTrue(end > start)
-        pass
 
     def test_scroll_up(self):
         self.instance.open_webpage(self.url)
@@ -45,7 +43,6 @@ class ScraperTestCase(unittest.TestCase):
         self.instance.scroll_up(4)
         end = float(self.instance.get_scroll_height())
         self.assertTrue(end < start)
-        pass
 
     def test_go_back(self):
         self.instance.open_webpage(self.url)
@@ -86,4 +83,13 @@ class ScraperTestCase(unittest.TestCase):
         # self.assertTrue(len(actual_value.keys()) == 13)
         self.assertTrue(type(actual_value['href']) == str)
         self.assertMultiLineEqual(actual_value['href'], "ibiza-nights")
+    
+    def test_download_image(self):
+        perfume = 'erose'
+        test_url = self.stem + '/products/' + perfume
+        test_filename = str(uuid.uuid4())
+        self.instance.download_image(test_url, test_filename, self.test_filepath)
+        test_file_path = str(self.test_filepath) + test_filename + '.jpg'
+        test = os.path.exists(test_file_path)
+        self.assertTrue(test == True)
         
