@@ -55,4 +55,8 @@ class ScraperTestCase(unittest.TestCase):
         original_page = self.instance.get_current_url()
         self.assertTrue(original_page == self.url)
 
-        
+    def test_clean_list(self):
+        expected_value = ['one', 'two', 'three']
+        list = ['one', None, 'two', None, 'three']
+        actual_value = self.instance.clean_list(list)
+        self.assertEqual(expected_value, actual_value)
