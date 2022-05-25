@@ -29,3 +29,21 @@ class ScraperTestCase(unittest.TestCase):
         actual_value = str(self.instance.get_current_url())
         self.assertMultiLineEqual(test_value, actual_value)
         pass
+
+    def test_scroll_down(self):
+        self.instance.open_webpage(self.url)
+        start = float(self.instance.get_scroll_height())
+        self.instance.scroll_down(4)
+        end = float(self.instance.get_scroll_height())
+        self.assertTrue(end > start)
+        pass
+
+    def test_scroll_up(self):
+        self.instance.open_webpage(self.url)
+        self.instance.scroll_down(4)
+        start = float(self.instance.get_scroll_height())
+        self.instance.scroll_up(4)
+        end = float(self.instance.get_scroll_height())
+        self.assertTrue(end < start)
+        pass
+    
