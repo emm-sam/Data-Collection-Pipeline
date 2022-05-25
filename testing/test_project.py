@@ -13,3 +13,10 @@ class ScraperTestCase(unittest.TestCase):
     def tearDownClass(cls):
         cls.instance.close_webpage()
         pass
+
+    def test_open_webpage(self):
+        test_value = self.url
+        self.instance.open_webpage(test_value)
+        actual_value = str(self.instance.get_current_url())
+        self.assertMultiLineEqual(test_value, actual_value)
+        pass
