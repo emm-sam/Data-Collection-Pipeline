@@ -2,6 +2,7 @@ import unittest
 from webscraper_project.scraper import PerfumeScraper
 import os.path
 import uuid
+from pandas import DataFrame
 
 class ScraperTestCase(unittest.TestCase):
     @classmethod
@@ -11,6 +12,7 @@ class ScraperTestCase(unittest.TestCase):
         cls.url = "https://bloomperfume.co.uk/collections/perfumes"
         cls.stem = "https://bloomperfume.co.uk"
         cls.test_filepath = '/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data2/download_test/'
+        cls.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
 
     @classmethod
     def tearDownClass(cls):
@@ -111,3 +113,22 @@ class ScraperTestCase(unittest.TestCase):
         self.assertTrue(test == True)
         test2 = os.path.exists(test_file_path2)
         self.assertTrue(test2 == True)
+
+    def test_data_clean(self):
+        data_frame = self.instance.data_clean(self.dict)
+        list2 = data_frame.columns
+        self.assertTrue(len(list2) == 20)
+        column = "volume"
+        self.assertTrue(column in list2)
+        test = data_frame['top notes'][0]
+        self.assertIsInstance(test, list)
+        test2 = data_frame['href'][0]
+        self.assertIsInstance(test2, str)
+        self.assertIsInstance(data_frame, DataFrame)
+
+    
+    def test_open_json(self):
+        pass
+    
+    def test_close_json(self):
+        pass
