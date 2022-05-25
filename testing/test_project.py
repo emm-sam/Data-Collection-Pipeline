@@ -93,3 +93,21 @@ class ScraperTestCase(unittest.TestCase):
         test = os.path.exists(test_file_path)
         self.assertTrue(test == True)
         
+    def test_mult_img_dowload(self):
+        perfume1 = 'wilde'
+        perfume2 = 'junky'
+        test_url1 = self.stem + '/products/' + perfume1
+        test_url2 = self.stem + '/products/' + perfume2
+        list = [test_url1, test_url2]
+        dir_path = str(self.test_filepath)
+        test_file_path1 = '/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data2/download_test/wilde.jpg'
+        test_file_path2 = '/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data2/download_test/junky.jpg'
+        if os.path.exists(test_file_path1):
+            os.remove(test_file_path1)
+        if os.path.exists(test_file_path2):
+            os.remove(test_file_path2)
+        self.instance.downloads_multiple_img(list=list, dir_path=dir_path)
+        test = os.path.exists(test_file_path1)
+        self.assertTrue(test == True)
+        test2 = os.path.exists(test_file_path2)
+        self.assertTrue(test2 == True)
