@@ -1,4 +1,6 @@
+from webbrowser import Chrome
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 import time
 from time import sleep
 from selenium.webdriver.common.by import By
@@ -16,11 +18,28 @@ from sqlalchemy import create_engine, table
 import pandas as pd
 import psycopg2
 from sqlalchemy import inspect
+from selenium.webdriver.chrome.options import Options
+# from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 class PerfumeScraper: 
    
-    def __init__(self, url): 
-        self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver") 
+    def __init__(self, url):
+        # options = webdriver.ChromeOptions() 
+        chrome_options = Options()
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--window-size=1920,1080')
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--disable-dev-shm-usage') 
+        # "/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver"
+        # desired_capabilities=Chrome
+        # capabilities = webdriver.DesiredCapabilities.CHROME
+        # desired_capabilities=capabilities 
+        # self.driver = webdriver.Remote(command_executor='http://127.0.0.1:4444/wd/hub', options=options) 
+        # self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+        # self.driver = webdriver.Remote("http://127.0.0.1:4444/wd/hub", options=options)
+        self.driver = webdriver.Chrome(chrome_options=chrome_options)
+
         self.url = url
         self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
         self.s3 = boto3.client('s3')
@@ -79,6 +98,8 @@ class PerfumeScraper:
     def get_scroll_height(self):
         current_height = self.driver.execute_script("return window.pageYOffset + window.innerHeight")
         return current_height
+
+    # COLLECTING DATA FROM THE WEBSITE
 
     def get_links(self, url):
         self.open_webpage(url)
@@ -236,6 +257,8 @@ class PerfumeScraper:
             else:
                 pass
 
+    # MANIPULATING AND STORING THE DATA 
+
     def dump_json(self, filepath, dict, dict_name):
         with open(os.path.join(filepath, dict_name), mode='w') as f:
             json.dump(dict, f)
@@ -332,6 +355,8 @@ class PerfumeScraper:
             return False
             pass
 
+    # INTEGRATING THE ABOVE
+
     def run_scraper(self, filepath, no_pages):
         # scrapes the urls of all the products 
         url_links = self.get_multiple_links(no_pages) #42 
@@ -425,15 +450,10 @@ class PerfumeScraper:
           
         # self.uploadDirectory(filepath)
         print("----------------------")
-        self.close_webpage()
+        # self.close_webpage()
 
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
     my_scraper.open_webpage("https://bloomperfume.co.uk/collections/perfumes")
-    # filepath='/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/'
-    # link_list = my_scraper.get_multiple_links(number_pages=5)
-    # test_dict = my_scraper.make_test_dict()
-    # perfume_dict = my_scraper.scrape_add(link_list, test_dict)
-    # my_scraper.dump_json(filepath, perfume_dict,'Sample_Perfume_Dict.json')
-    # my_scraper.downloads_multiple_img(link_list, filepath)
-    my_scraper.close_webpage()
+    my_scraper.run_scraper(filepath='/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/', no_pages=1)
+    # my_scraper.close_webpage()
