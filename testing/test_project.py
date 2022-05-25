@@ -60,3 +60,22 @@ class ScraperTestCase(unittest.TestCase):
         list = ['one', None, 'two', None, 'three']
         actual_value = self.instance.clean_list(list)
         self.assertEqual(expected_value, actual_value)
+
+    def test_get_links(self):
+        actual_value = self.instance.get_links(self.url)
+        self.assertTrue(type(actual_value) == list)
+        self.assertTrue(type(actual_value[0]) == str)
+        self.assertTrue(len(actual_value) >= 20)
+        for a in actual_value:
+            split = a.split("/p") #may have to change this 
+            self.assertMultiLineEqual(split[0], self.stem)
+
+    def test_get_multiple_links(self):
+        actual_value = self.instance.get_multiple_links(2)
+        self.assertTrue(type(actual_value) == list)
+        self.assertTrue(type(actual_value[0]) == str)
+        self.assertTrue(len(actual_value) > 20)
+        for a in actual_value:
+            split = a.split("/p")
+            self.assertMultiLineEqual(split[0], self.stem)
+        pass
