@@ -126,9 +126,15 @@ class ScraperTestCase(unittest.TestCase):
         self.assertIsInstance(test2, str)
         self.assertIsInstance(data_frame, DataFrame)
 
-    
+    def test_scrape_add(self):
+        test_url = ['https://bloomperfume.co.uk/products/junky', 'https://bloomperfume.co.uk/products/wilde']
+        new_dict = self.instance.scrape_add(list = test_url, original_dict=self.dict)
+        test = new_dict['href']
+        self.assertIsInstance(new_dict, dict)
+        self.assertTrue(len(test) == 4)
+
     def test_open_json(self):
         pass
-    
+
     def test_close_json(self):
         pass
