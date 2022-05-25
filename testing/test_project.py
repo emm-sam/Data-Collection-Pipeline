@@ -138,3 +138,6 @@ class ScraperTestCase(unittest.TestCase):
 
     def test_close_json(self):
         pass
+
+    if __name__ == '__main__':
+        unittest.main()
