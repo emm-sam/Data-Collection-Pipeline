@@ -1,5 +1,5 @@
 import unittest
-from webscraper_project.scraper import PerfumeScraper
+from scraper import PerfumeScraper
 import os.path
 import uuid
 from pandas import DataFrame
@@ -139,5 +139,5 @@ class ScraperTestCase(unittest.TestCase):
     def test_close_json(self):
         pass
 
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()
