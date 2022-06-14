@@ -1,6 +1,6 @@
 from webbrowser import Chrome
 from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
+# from webdriver_manager.chrome import ChromeDriverManager
 import time
 from time import sleep
 from selenium.webdriver.common.by import By
@@ -31,15 +31,9 @@ class PerfumeScraper:
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--disable-dev-shm-usage') 
-        # "/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver"
-        # desired_capabilities=Chrome
-        # capabilities = webdriver.DesiredCapabilities.CHROME
-        # desired_capabilities=capabilities 
-        # self.driver = webdriver.Remote(command_executor='http://127.0.0.1:4444/wd/hub', options=options) 
-        # self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
-        # self.driver = webdriver.Remote("http://127.0.0.1:4444/wd/hub", options=options)
-        self.driver = webdriver.Chrome(chrome_options=chrome_options)
-
+        # self.driver = webdriver.Chrome(options=chrome_options)
+        self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver")
+        
         self.url = url
         self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
         self.s3 = boto3.client('s3')
@@ -47,9 +41,9 @@ class PerfumeScraper:
         DATABASE_TYPE = 'postgresql'
         DBAPI = 'psycopg2'
         DATABASE = 'postgres'
-        ENDPOINT = input('RDS endpoint: ') # Change it for your AWS endpoint
+        ENDPOINT = input('RDS endpoint: ') 
         USER = input('User: ')
-        PASSWORD = input('Password: ') #password for the rds database NOT pgadmin4 
+        PASSWORD = input('Password: ') 
         PORT = input('Port: ')
         self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
         
@@ -357,7 +351,7 @@ class PerfumeScraper:
 
     # INTEGRATING THE ABOVE
 
-    def run_scraper(self, filepath, no_pages):
+    def run_scraper(self, no_pages):
         # scrapes the urls of all the products 
         url_links = self.get_multiple_links(no_pages) #42 
 
@@ -382,78 +376,67 @@ class PerfumeScraper:
                 rds_unscraped_href.append(x)
 
         print('rds unscraped:', len(rds_unscraped_href))
+
         # upload existing database (hardcopy)
-        existing_dict = self.open_json('/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/Sample_Perfume_Dict.json')
+        # existing_dict = self.open_json('/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/Sample_Perfume_Dict.json')
         
         # scrape the new list and add to empty dictionary
         extra_dict = self.scrape_add(rds_unscraped_url, self.dict)
-        if extra_dict == True:
-            if existing_dict == True:
-                total_dict = self.add_dict(existing_dict, extra_dict)
-                self.dump_json(filepath, total_dict, 'Sample_Perfume_Dict.json')
+        # if extra_dict == True:
+        #     if existing_dict == True:
+        #         total_dict = self.add_dict(existing_dict, extra_dict)
+        #         self.dump_json(filepath, total_dict, 'Sample_Perfume_Dict.json')
        
-        # cleans the 
+        # cleans the dictionary and turns into pd dataframe, appends to rds 
         clean_df = self.data_clean(extra_dict)
         self.update_table_rds(data_frame=clean_df, table_name='PerfumeScraper')
 
-        # checks the href against the hardcopy of dictionary 
-        # ex_dc = existing_dict['href']
-        # unscraped_url_local = []
-        # unscraped_href_local = []
+        # s3_noimg = []
         # for x in href_list:
-        #     if x not in ex_dc:
+        #     key = str(x) + '.jpg'
+        #     result = self.key_exists(mykey=key, mybucket='imagebucketaic')
+        #     if result == False:
         #         stem = 'https://bloomperfume.co.uk/products/'
         #         url = stem + str(x)
-        #         unscraped_url_local.append(url)
-        #         unscraped_href_local.append(x)
-        # perf_dict = self.scrape_add(unscraped_url_local, existing_dict)
+        #         s3_noimg.append(url)
+        #     else:
+        #         pass
+        # print("not on s3: ", len(s3_noimg))
+        # print(s3_noimg)
 
-        s3_noimg = []
-        for x in href_list:
-            key = str(x) + '.jpg'
-            result = self.key_exists(mykey=key, mybucket='imagebucketaic')
-            if result == False:
-                stem = 'https://bloomperfume.co.uk/products/'
-                url = stem + str(x)
-                s3_noimg.append(url)
-            else:
-                pass
-        print("not on s3: ", len(s3_noimg))
-        print(s3_noimg)
+        # if len(s3_noimg) > 1:
+        #     self.downloads_multiple_img(list=s3_noimg, dir_path=filepath)
+        # elif len(s3_noimg) == 1:
+        #     print('needs single download')
+        #     print(s3_noimg)
+        # else:
+        #     pass
 
-        if len(s3_noimg) > 1:
-            self.downloads_multiple_img(list=s3_noimg, dir_path=filepath)
-        elif len(s3_noimg) == 1:
-            print('needs single download')
-            print(s3_noimg)
-        else:
-            pass
+        # no_img = []
+        # for x in rds_unscraped_href:
+        #     full_path = filepath + str(x) + '.jpg'
+        #     if os.path.exists(full_path) == False:
+        #         # print(full_path)
+        #         stem = 'https://bloomperfume.co.uk/products/'
+        #         url = stem + str(x)
+        #         no_img.append(url)
+        #         # self.download_image(url=url, file_name=href, dir_path=filepath)
+        # print("no_img:", len(no_img))
 
-        no_img = []
-        for x in rds_unscraped_href:
-            full_path = filepath + str(x) + '.jpg'
-            if os.path.exists(full_path) == False:
-                # print(full_path)
-                stem = 'https://bloomperfume.co.uk/products/'
-                url = stem + str(x)
-                no_img.append(url)
-                # self.download_image(url=url, file_name=href, dir_path=filepath)
-        print("no_img:", len(no_img))
-
-        if len(no_img) > 1:
-            self.downloads_multiple_img(list=no_img, dir_path=filepath)
-        elif len(no_img) == 1:
-            print('needs single download')
-            print(no_img)
-        else:
-            pass
+        # if len(no_img) > 1:
+        #     self.downloads_multiple_img(list=no_img, dir_path=filepath)
+        # elif len(no_img) == 1:
+        #     print('needs single download')
+        #     print(no_img)
+        # else:
+        #     pass
           
         # self.uploadDirectory(filepath)
         print("----------------------")
-        # self.close_webpage()
+        
 
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
     my_scraper.open_webpage("https://bloomperfume.co.uk/collections/perfumes")
-    my_scraper.run_scraper(filepath='/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/', no_pages=1)
-    # my_scraper.close_webpage()
+    my_scraper.run_scraper(no_pages=10)
+    my_scraper.close_webpage()
