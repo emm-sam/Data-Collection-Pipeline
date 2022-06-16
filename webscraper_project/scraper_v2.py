@@ -10,13 +10,15 @@ from time import sleep
 import uuid 
 import os
 import json
-
+import urllib.request
+import urllib3.exceptions
+import requests
 
 class GenericScraper:
     def __init__(self, url):
         self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver")
         self.url = url
-        self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
+        # self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
 
     def open_webpage(self, url):
         self.driver.get(url)
@@ -158,6 +160,44 @@ class GenericScraper:
         new_tuple = (*new_list,) #converst list to tuple 
         dct = dict((x, y) for x, y in new_tuple) # convert tuples to dict 
         return dct
+
+    def download_image(self, image_link:str, file_name:str, dir_path:str):
+        '''
+        Downloads a single image to local storage from an image link
+        Args:
+            image_link: url of image to be downloaded
+            file_name: name of downloaded file (without filetype)
+            dir_path: path of directory to be downloaded to
+        '''
+        try:
+            self.driver.get(image_link)
+            full_path = dir_path + file_name + '.jpg'
+            urllib.request.urlretrieve(image_link, full_path)
+        except NoSuchElementException:
+            pass
+    
+    def href_to_url(self, base_url:str, href:str) -> str:
+        full_url = base_url + href
+        return full_url
+
+    def url_to_href(self, url:str) -> str:
+        split = url.split("s/")
+        href = split[1]
+        return href 
+
+    def downloads_multiple_img(self, image_list:list, dir_path:str):
+        '''
+        Downloads multiple images to a specified directory
+        ?? if image link or url 
+        '''
+        for i in image_list:
+            href = self.url_to_href(url=i)
+            full_path = dir_path + href +'.jpg'
+            if os.path.exists(full_path) == False:
+                self.download_image(image_link=url, file_name=href, dir_path=dir_path)
+            else:
+                pass
+
 
 class DataManipulation:
     def __init__(self):
