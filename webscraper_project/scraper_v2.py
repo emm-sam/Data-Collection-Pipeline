@@ -209,16 +209,7 @@ class GenericScraper:
 
 class DataManipulation:
     def __init__(self):
-        self.s3 = boto3.client('s3')
-        self.bucket = input('S3 bucket name: ')
-        DATABASE_TYPE = 'postgresql'
-        DBAPI = 'psycopg2'
-        DATABASE = 'postgres'
-        ENDPOINT = input('RDS endpoint: ') 
-        USER = input('User: ')
-        PASSWORD = input('Password: ') 
-        PORT = input('Port: ')
-        self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}") 
+        pass
 
     def open_json(self, file_path):
         '''
@@ -268,7 +259,7 @@ class DataManipulation:
         self.engine.connect()
         data_frame.to_sql(table_name, con = self.engine, if_exists = 'append')
 
-    def inspect_rds(self, table):
+    def inspect_rds(self):
         self.engine.connect()
         # table = 'PerfumeScraper'
         table_data = pd.read_sql_table('PerfumeScraper', self.engine)
@@ -288,7 +279,19 @@ class DataManipulation:
 class PerfumeScraper(GenericScraper, DataManipulation):
 
     def __init__(self):
-        super().__init__("https://bloomperfume.co.uk/collections/perfumes")
+        super().__init__()
+        self.url='https://bloomperfume.co.uk/collections/perfumes'
+        # self.s3 = boto3.client('s3')
+        # self.bucket = input('S3 bucket name: ')
+        # DATABASE_TYPE = 'postgresql'
+        # DBAPI = 'psycopg2'
+        # DATABASE = 'postgres'
+        # ENDPOINT = input('RDS endpoint: ') 
+        # USER = input('User: ')
+        # PASSWORD = input('Password: ') 
+        # PORT = input('Port: ')
+        # self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
+        # self.engine.connect() 
         self.format = (
                 ('name', self.get_xpathtext, '//*[@id="product-page"]/div/div[1]/div/div[1]/h1'),
                 ('price', self.get_xpathtext, '//*[@id="product-page"]/div/div[3]/div/div[1]/div[2]/span[1]'),
@@ -345,6 +348,15 @@ example_list = ['https://bloomperfume.co.uk/products/canvas', 'https://bloomperf
 
 if __name__ == '__main__':
     myscraper = PerfumeScraper()
-    # print(myscraper.loop_scrape(example_list)) # list containing dictionary 
-    print(myscraper.get_urls('https://bloomperfume.co.uk/collections/perfumes'))
+    myscraper.open_webpage(myscraper.url)
+    # samplelist = myscraper.loop_scrape(example_list) # list containing dictionaries
+    # example_dict = samplelist[0]
+    # mydata = DataManipulation()
+    # myscraper.inspect_rds(engine=myscraper.engine) 
+    # result = myscraper.loop_scrape(example_list) # list containing dictionary
+    # myscraper.dump_json('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/Data_Collection_Pipeline/webscraper_project', result[0], 'example.json')
+    # print(myscraper.get_urls('https://bloomperfume.co.uk/collections/perfumes'))
+    # pando = myscraper.inspect_rds('PerfumeScraper')
+    # print(pando.head())
+    
     
