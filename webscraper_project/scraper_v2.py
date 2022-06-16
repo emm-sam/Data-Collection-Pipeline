@@ -1,4 +1,5 @@
 import json
+from types import new_class
 from webbrowser import Chrome
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -8,6 +9,7 @@ import time
 from time import sleep
 import uuid 
 import os
+import json
 
 
 class GenericScraper:
@@ -34,7 +36,7 @@ class GenericScraper:
         var = element.text
         return var
 
-    def get_attr(self,element, attribute:str): #3 #USED
+    def get_attr(self, element, attribute:str): #3 #USED
         '''
         takes in webelement and attributename
         returns attribute content
@@ -122,12 +124,52 @@ class GenericScraper:
         dct = dict((x, y) for x, y in new_tuple) # convert tuples to dict 
         return dct
 
+        # def get_links(self, url):
+        # self.open_webpage(url)
+        # time.sleep(1)
+        # try:
+        #     product_container = self.driver.find_element(By.XPATH, '//div[@class="products-list"]')
+        #     prod_list = product_container.find_elements(By.CLASS_NAME, "product-name")
+        #     link_list = [] 
+        #     for p in prod_list:
+        #         href = p.get_attribute("href")
+        #         link_list.append(href)
+        # except:
+        #     pass
+        # return link_list
+        # (name:str, bin_xpath:str, bin_tag:str, func, arg:str
+        #  get_bin
+
     # def tupletodict(self, tuple:tuple):
     #     dct = dict((x, y) for x, y in tuple)
     #     return dct 
 
+class DataManipulation:
+    def __init__(self):
+        pass 
 
-class PerfumeScraper(GenericScraper):
+    def open_json(self, file_path):
+        '''
+        Opens json file
+        Args: file path
+        Returns: dictionary
+        '''
+        with open(file_path, mode='r') as f:
+            data = json.load(f)
+            return data
+
+    def dump_json(self, file_path, dict, dict_name):
+        '''
+        Stores dictionary as json file
+        Args: 
+            file_path: path to where json will be stored 
+            dict: dictionary to be stored
+            dict_name: name of dict, suffix with ".json"
+        '''
+        with open(os.path.join(file_path, dict_name), mode='w') as f:
+            json.dump(dict, f)
+
+class PerfumeScraper(GenericScraper, DataManipulation):
     def __init__(self):
         super().__init__("https://bloomperfume.co.uk/collections/perfumes")
         self.format = (
@@ -147,7 +189,22 @@ class PerfumeScraper(GenericScraper):
                 # ('related_perfumes', '//*[@id="product-similar"]/div/div', 'div', self.get_relxpathtext, './figure/figcaption/span[1]')
                 )
 
+    def get_urls(self, main_url:str) -> list:
+        '''
+        Scrapes product urls from given url
+        Returns: list of urls 
+        '''
+        self.open_webpage(main_url)
+        container = self.driver.find_element(By.XPATH, '//div[@class="products-list"]')
+        prod_list = container.find_elements(By.CLASS_NAME, "product-name")
+        href_list = self.loop_elements(prod_list, self.get_attr, 'href')
+        return href_list
+
     def loop_scrape(self, url_list:list):
+        '''
+        Takes in a list of urls and scrapes each page
+        Returns: list of individual dictionaries
+        '''
         new_list = []
         for url in url_list:
             self.open_webpage(url)
@@ -155,10 +212,14 @@ class PerfumeScraper(GenericScraper):
             new_list.append(result)
         return new_list
 
+
+
 example_list = ['https://bloomperfume.co.uk/products/canvas', 'https://bloomperfume.co.uk/products/figuier-noir', 'https://bloomperfume.co.uk/products/pg20-1-sorong']
 
+#[{'name': 'Canvas', 'price': '£110.00', 'concentration': '£110.00, 50 ml EdP', 'brand': 'Der Duft', 'description': ['', '']}, {'name': 'Figuier Noir', 'price': '£135.00', 'concentration': '£135.00, 100 ml EdP', 'brand': 'Houbigant', 'description': ['', '', '', '']}, {'name': 'PG20.1 Sorong', 'price': '£138.00', 'concentration': '£138.00, 100 ml EdP', 'brand': 'Pierre Guillaume - Parfumerie Générale', 'description': ['']}]
 
 if __name__ == '__main__':
     myscraper = PerfumeScraper()
-    print(myscraper.loop_scrape(example_list)) # list containing dictionary 
+    # print(myscraper.loop_scrape(example_list)) # list containing dictionary 
+    print(myscraper.get_urls('https://bloomperfume.co.uk/collections/perfumes'))
     
