@@ -22,9 +22,15 @@ from sqlalchemy import inspect
 from selenium.webdriver.chrome.options import Options
 
 class GenericScraper:
-    def __init__(self, url):
+    def __init__(self):
         self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver")
-        self.url = url
+        chrome_options = Options()
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--window-size=1920,1080')
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--disable-dev-shm-usage') 
+        # self.driver = webdriver.Chrome(options=chrome_options)
         # self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
 
     def open_webpage(self, url):
@@ -276,6 +282,8 @@ class DataManipulation:
         except:
             return False
 
+
+
 class PerfumeScraper(GenericScraper, DataManipulation):
 
     def __init__(self):
@@ -321,6 +329,12 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         return url_list
 
     def multiple_urls(self, no_pages:int) -> list:
+        '''
+        Scrapes multiple pages for urls
+        Args:
+            no_pages: number of pages of product
+        Returns: a list of urls
+        '''
         all_links = []
         for i in range(1, (no_pages+1), 1):
             paged_url = self.url + "?page=" + str(i)
@@ -353,10 +367,18 @@ if __name__ == '__main__':
     # example_dict = samplelist[0]
     # mydata = DataManipulation()
     # myscraper.inspect_rds(engine=myscraper.engine) 
-    # result = myscraper.loop_scrape(example_list) # list containing dictionary
+    result = myscraper.loop_scrape(example_list) # list containing dictionary
+    test = result.append(result)
+    print(test)
+    empty_dict = {}
+    empty_dict['name'] = []
+    empty_dict['name'].append(result[0]['name'])
+    print(empty_dict)
+    empty_dict['name'].append(result[1]['name'])
+    print(empty_dict)
     # myscraper.dump_json('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/Data_Collection_Pipeline/webscraper_project', result[0], 'example.json')
     # print(myscraper.get_urls('https://bloomperfume.co.uk/collections/perfumes'))
     # pando = myscraper.inspect_rds('PerfumeScraper')
     # print(pando.head())
-    
+    myscraper.close_webpage() 
     
