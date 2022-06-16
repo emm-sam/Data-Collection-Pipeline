@@ -13,6 +13,13 @@ import json
 import urllib.request
 import urllib3.exceptions
 import requests
+import boto3
+import botocore
+from sqlalchemy import create_engine, table
+import pandas as pd
+import psycopg2
+from sqlalchemy import inspect
+from selenium.webdriver.chrome.options import Options
 
 class GenericScraper:
     def __init__(self, url):
@@ -142,6 +149,7 @@ class GenericScraper:
         tuple = (name, new_list) # is this necessary 
         return tuple
 
+    # DATA COLLECTION
     def scrape_page(self, tup_list:tuple) -> tuple:
         '''
         takes in a tuple of tuples of length 3 or 5 (must be in the required format)
@@ -185,23 +193,32 @@ class GenericScraper:
         href = split[1]
         return href 
 
-    def downloads_multiple_img(self, image_list:list, dir_path:str):
-        '''
-        Downloads multiple images to a specified directory
-        ?? if image link or url 
-        '''
-        for i in image_list:
-            href = self.url_to_href(url=i)
-            full_path = dir_path + href +'.jpg'
-            if os.path.exists(full_path) == False:
-                self.download_image(image_link=url, file_name=href, dir_path=dir_path)
-            else:
-                pass
+    # def downloads_multiple_img(self, image_list:list, dir_path:str):
+    #     '''
+    #     Downloads multiple images to a specified directory
+    #     ?? if image link or url 
+    #     '''
+    #     for i in image_list:
+    #         href = self.url_to_href(url=i)
+    #         full_path = dir_path + href +'.jpg'
+    #         if os.path.exists(full_path) == False:
+    #             self.download_image(image_link=url, file_name=href, dir_path=dir_path)
+    #         else:
+    #             pass
 
 
 class DataManipulation:
     def __init__(self):
-        pass 
+        self.s3 = boto3.client('s3')
+        self.bucket = input('S3 bucket name: ')
+        DATABASE_TYPE = 'postgresql'
+        DBAPI = 'psycopg2'
+        DATABASE = 'postgres'
+        ENDPOINT = input('RDS endpoint: ') 
+        USER = input('User: ')
+        PASSWORD = input('Password: ') 
+        PORT = input('Port: ')
+        self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}") 
 
     def open_json(self, file_path):
         '''
@@ -224,7 +241,52 @@ class DataManipulation:
         with open(os.path.join(file_path, dict_name), mode='w') as f:
             json.dump(dict, f)
 
+    def uploadDirectory(self, dir_path:str):
+        '''
+        Uploads directory contents directly to S3 bucket
+        Args: 
+            dir_path: path to directory to be uploaded
+        '''
+        bucket = self.bucket
+        for (root, dirs, files) in os.walk(dir_path):
+            for file in files:
+                self.s3.upload_file(os.path.join(root,file),bucket,file)
+
+    def update_databse_rds(self, data_frame:pd.DataFrame, table_name:str):
+        '''
+        Uploads dataframe to specified table in AWS RDS
+        Replaces existing table 
+        '''
+        self.engine.connect()
+        data_frame.to_sql(table_name, self.engine, if_exists='replace')
+
+    def update_table_rds(self, data_frame:pd.DataFrame, table_name:str):
+        '''
+        Uploads dataframe to specified table in AWS RDS
+        Appends data to existing table
+        '''
+        self.engine.connect()
+        data_frame.to_sql(table_name, con = self.engine, if_exists = 'append')
+
+    def inspect_rds(self, table):
+        self.engine.connect()
+        # table = 'PerfumeScraper'
+        table_data = pd.read_sql_table('PerfumeScraper', self.engine)
+        # pd.read_sql_query('''SELECT * FROM actor LIMIT 10''', engine)
+        return table_data
+
+    def key_exists(self, mykey:str, mybucket:str):
+        try:
+            response = self.s3.list_objects_v2(Bucket=mybucket, Prefix=mykey)
+            if response:
+                for obj in response['Contents']:
+                    if mykey == obj['Key']:
+                        return True
+        except:
+            return False
+
 class PerfumeScraper(GenericScraper, DataManipulation):
+
     def __init__(self):
         super().__init__("https://bloomperfume.co.uk/collections/perfumes")
         self.format = (
