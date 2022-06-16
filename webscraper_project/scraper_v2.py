@@ -26,6 +26,41 @@ class GenericScraper:
             cookies_button.click()
         except NoSuchElementException:
             pass
+     
+    def close_webpage(self):
+        self.driver.quit()
+
+    def go_back(self):
+        self.driver.back()
+
+    def get_current_url(self):
+        return self.driver.current_url
+
+    def search_website(self, base_url:str, page_no:str):
+        url = base_url + '/search?q=' + page_no
+        self.driver.get(url)
+
+    def scroll_down(self, no_seconds):
+        start_time = time.time()
+        while (time.time() - start_time) < no_seconds:
+            self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.DOWN)
+        else:
+            pass
+    
+    def scroll_up(self, no_seconds):
+        start_time2 = time.time()
+        while (time.time() - start_time2) < no_seconds:
+            self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.PAGE_UP)
+        else:
+            pass
+
+    def get_full_height(self):
+        total_height = str(self.driver.execute_script("return document.body.scrollHeight"))
+        return total_height
+        
+    def get_scroll_height(self):
+        current_height = self.driver.execute_script("return window.pageYOffset + window.innerHeight")
+        return current_height
 
     # TAKE IN WEBELEMENT
     def get_text(self, element): #5 #USED
@@ -124,26 +159,6 @@ class GenericScraper:
         dct = dict((x, y) for x, y in new_tuple) # convert tuples to dict 
         return dct
 
-        # def get_links(self, url):
-        # self.open_webpage(url)
-        # time.sleep(1)
-        # try:
-        #     product_container = self.driver.find_element(By.XPATH, '//div[@class="products-list"]')
-        #     prod_list = product_container.find_elements(By.CLASS_NAME, "product-name")
-        #     link_list = [] 
-        #     for p in prod_list:
-        #         href = p.get_attribute("href")
-        #         link_list.append(href)
-        # except:
-        #     pass
-        # return link_list
-        # (name:str, bin_xpath:str, bin_tag:str, func, arg:str
-        #  get_bin
-
-    # def tupletodict(self, tuple:tuple):
-    #     dct = dict((x, y) for x, y in tuple)
-    #     return dct 
-
 class DataManipulation:
     def __init__(self):
         pass 
@@ -197,10 +212,18 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         self.open_webpage(main_url)
         container = self.driver.find_element(By.XPATH, '//div[@class="products-list"]')
         prod_list = container.find_elements(By.CLASS_NAME, "product-name")
-        href_list = self.loop_elements(prod_list, self.get_attr, 'href')
-        return href_list
+        url_list = self.loop_elements(prod_list, self.get_attr, 'href')
+        return url_list
 
-    def loop_scrape(self, url_list:list):
+    def multiple_urls(self, no_pages:int) -> list:
+        all_links = []
+        for i in range(1, (no_pages+1), 1):
+            paged_url = self.url + "?page=" + str(i)
+            list_i = self.get_urls(paged_url)
+            all_links += list_i
+        return all_links
+
+    def loop_scrape(self, url_list:list) -> list:
         '''
         Takes in a list of urls and scrapes each page
         Returns: list of individual dictionaries
