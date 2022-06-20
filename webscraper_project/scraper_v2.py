@@ -282,7 +282,35 @@ class DataManipulation:
         except:
             return False
 
+    # def scrape_add(self, list, original_dict):
+    #     for url in list:
+    #         perfume = self.scrape_product(url)
+    #         original_dict["href"].append(perfume["href"])
+    #         original_dict["complete"].append(perfume["complete"])
+    #         original_dict["uuid"].append(perfume["uuid"])
+    #         original_dict["name"].append(perfume["name"])
+    #         original_dict["id"].append(perfume["id"])
+    #         original_dict["price"].append(perfume["price"])
+    #         original_dict["strength"].append(perfume["strength"])
+    #         original_dict["category"].append(perfume["category"])
+    #         original_dict["brand"].append(perfume["brand"])
+    #         original_dict["flavours"].append(perfume["flavours"])
+    #         original_dict["top notes"].append(perfume["top notes"])
+    #         original_dict["heart notes"].append(perfume["heart notes"])
+    #         original_dict["base notes"].append(perfume["base notes"])
+    #         original_dict["image link"].append(perfume["image link"])
+    #     return original_dict
 
+    # def add_dictionary(self, dict_list):
+    #     '''
+    #     dictionaries in list.. 
+    #     '''
+    #     for dict in dict_list:
+    #         dict.keys()
+    #         empty_dict = {}
+    #         empty_dict['name'] = []
+    #         empty_dict['name'].append(result[0]['name'])
+    #     pass 
 
 class PerfumeScraper(GenericScraper, DataManipulation):
 
@@ -347,18 +375,31 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         Takes in a list of urls and scrapes each page
         Returns: list of individual dictionaries
         '''
-        new_list = []
+        dict_list = []
         for url in url_list:
             self.open_webpage(url)
             result = self.scrape_page(tup_list = self.format)
-            new_list.append(result)
-        return new_list
+            dict_list.append(result)
+        return dict_list
 
+    def list_to_dict(self, listofdicts:list):
+        '''
+        Combines dictionaries in a list to the same dictionary
+        Args:
+            listofdicts: a list of dictionaries with the SAME keys
+        Returns: one dictionary 
+        '''
+        new_dict = {}
+        for k in listofdicts[0].keys():
+            new_dict[k] = tuple(new_dict[k] for new_dict in listofdicts)
+        return new_dict
 
+    def dict_to_pd(self):
+        
+        pass 
 
 example_list = ['https://bloomperfume.co.uk/products/canvas', 'https://bloomperfume.co.uk/products/figuier-noir', 'https://bloomperfume.co.uk/products/pg20-1-sorong']
-
-#[{'name': 'Canvas', 'price': '£110.00', 'concentration': '£110.00, 50 ml EdP', 'brand': 'Der Duft', 'description': ['', '']}, {'name': 'Figuier Noir', 'price': '£135.00', 'concentration': '£135.00, 100 ml EdP', 'brand': 'Houbigant', 'description': ['', '', '', '']}, {'name': 'PG20.1 Sorong', 'price': '£138.00', 'concentration': '£138.00, 100 ml EdP', 'brand': 'Pierre Guillaume - Parfumerie Générale', 'description': ['']}]
+example_listfdicts= [{'name': 'Canvas', 'price': '£110.00', 'concentration': '£110.00, 50 ml EdP', 'brand': 'Der Duft', 'description': ['', '']}, {'name': 'Figuier Noir', 'price': '£135.00', 'concentration': '£135.00, 100 ml EdP', 'brand': 'Houbigant', 'description': ['', '', '', '']}, {'name': 'PG20.1 Sorong', 'price': '£138.00', 'concentration': '£138.00, 100 ml EdP', 'brand': 'Pierre Guillaume - Parfumerie Générale', 'description': ['']}]
 
 if __name__ == '__main__':
     myscraper = PerfumeScraper()
@@ -367,18 +408,15 @@ if __name__ == '__main__':
     # example_dict = samplelist[0]
     # mydata = DataManipulation()
     # myscraper.inspect_rds(engine=myscraper.engine) 
-    result = myscraper.loop_scrape(example_list) # list containing dictionary
-    test = result.append(result)
-    print(test)
-    empty_dict = {}
-    empty_dict['name'] = []
-    empty_dict['name'].append(result[0]['name'])
-    print(empty_dict)
-    empty_dict['name'].append(result[1]['name'])
-    print(empty_dict)
+    # result = myscraper.loop_scrape(example_list) # list containing dictionary
     # myscraper.dump_json('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/Data_Collection_Pipeline/webscraper_project', result[0], 'example.json')
     # print(myscraper.get_urls('https://bloomperfume.co.uk/collections/perfumes'))
     # pando = myscraper.inspect_rds('PerfumeScraper')
     # print(pando.head())
+
+    # url_list = myscraper.multiple_urls(no_pages=2) - tested 20/6
+    # list_dict = myscraper.loop_scrape(url_list=url_list) tested 20/6
+    # first_40 = myscraper.list_to_dict(list_dict) tested 20/6
+    # myscraper.dump_json('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline', first_40, 'FIRST_40.json') tested 20/6
     myscraper.close_webpage() 
     

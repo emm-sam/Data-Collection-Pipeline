@@ -31,8 +31,8 @@ class PerfumeScraper:
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--disable-dev-shm-usage') 
-        self.driver = webdriver.Chrome(options=chrome_options)
-        # self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver")
+        # self.driver = webdriver.Chrome(options=chrome_options)
+        self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver")
         
         self.url = url
         self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
@@ -387,9 +387,10 @@ class PerfumeScraper:
         #         total_dict = self.add_dict(existing_dict, extra_dict)
         #         self.dump_json(filepath, total_dict, 'Sample_Perfume_Dict.json')
        
+        self.dump_json(filepath='/Users/emmasamouelle/Desktop/Scratch/old_pipeline', dict=extra_dict, dict_name='Sample_Perfume_Dict.json')
         # cleans the dictionary and turns into pd dataframe, appends to rds 
-        clean_df = self.data_clean(extra_dict)
-        self.update_table_rds(data_frame=clean_df, table_name='PerfumeScraper')
+        # clean_df = self.data_clean(extra_dict)
+        # self.update_table_rds(data_frame=clean_df, table_name='PerfumeScraper')
 
         # s3_noimg = []
         # for x in href_list:
@@ -438,5 +439,5 @@ class PerfumeScraper:
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
     my_scraper.open_webpage("https://bloomperfume.co.uk/collections/perfumes")
-    my_scraper.run_scraper(no_pages=10)
+    my_scraper.run_scraper(no_pages=1)
     my_scraper.close_webpage()
