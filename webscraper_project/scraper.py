@@ -1,6 +1,5 @@
 from webbrowser import Chrome
 from selenium import webdriver
-# from webdriver_manager.chrome import ChromeDriverManager
 import time
 from time import sleep
 from selenium.webdriver.common.by import By
@@ -19,35 +18,40 @@ import pandas as pd
 import psycopg2
 from sqlalchemy import inspect
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver import ChromeOptions
+from webdriver_manager.chrome import ChromeDriverManager
 # from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-
-
+import yaml
 
 class PerfumeScraper: 
    
-    def __init__(self, url):
+    def __init__(self, url:str, creds: str='config/RDS_creds.yaml'):
         # options = webdriver.ChromeOptions() 
-        chrome_options = Options()
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--window-size=1920,1080')
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--disable-gpu')
-        chrome_options.add_argument('--disable-dev-shm-usage') 
-        self.driver = webdriver.Chrome(options=chrome_options)
+        options = Options()
+        # options = ChromeOptions()
+        options.add_argument('--no-sandbox')
+        options.add_argument('--window-size=1920,1080')
+        options.add_argument('--headless')
+        options.add_argument('--disable-gpu')
+        options.add_argument('--disable-dev-shm-usage') 
+        options.add_argument('--remote-debugging-port=9222')
+        self.driver = webdriver.Chrome(options=options)
         # self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver")
-        
+        # self.driver = Chrome(ChromeDriverManager().install(), options=options)
+
         self.url = url
         self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
         self.s3 = boto3.client('s3')
         self.bucket = 'imagebucketaic'
-        DATABASE_TYPE = 'postgresql'
-        DBAPI = 'psycopg2'
-        DATABASE = 'postgres'
-        ENDPOINT = 'database-1.ciswmej8oq4i.eu-west-2.rds.amazonaws.com'
-        USER = 'POSTGRES'
-        PASSWORD = input('Password: ') 
-        PORT = '5432'
-       
+        with open(creds, 'r') as f:
+            creds = yaml.safe_load(f)
+        DATABASE_TYPE= creds['DATABASE_TYPE']
+        DBAPI= creds['DBAPI']
+        USER= creds['USER']
+        PASSWORD= creds['PASSWORD']
+        ENDPOINT= creds['ENDPOINT']
+        PORT= creds['PORT']
+        DATABASE= creds['DATABASE']
         self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
         
     # FOR WEBSITE NAVIGATION
