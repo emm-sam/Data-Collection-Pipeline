@@ -21,6 +21,17 @@ from sqlalchemy import inspect
 from selenium.webdriver.chrome.options import Options
 # from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
+def read_secrets():
+    filename = os.path.join('secrets.json')
+    try:
+        with open(filename, mode='r') as f:
+            return json.loads(f.read())
+    except FileNotFoundError:
+        return {}
+
+secrets = read_secrets()
+print(secrets)
+
 class PerfumeScraper: 
    
     def __init__(self, url):
@@ -38,14 +49,19 @@ class PerfumeScraper:
         self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
         self.s3 = boto3.client('s3')
         self.bucket = 'imagebucketaic'
-        DATABASE_TYPE = 'postgresql'
-        DBAPI = 'psycopg2'
-        DATABASE = 'postgres'
-        ENDPOINT = input('RDS endpoint: ') 
-        USER = input('User: ')
-        PASSWORD = input('Password: ') 
-        PORT = input('Port: ')
-        self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
+        # DATABASE_TYPE = 'postgresql'
+        # DBAPI = 'psycopg2'
+        # DATABASE = 'postgres'
+        # ENDPOINT = input('RDS endpoint: ') 
+        # USER = input('User: ')
+        # PASSWORD = input('Password: ') 
+        # PORT = input('Port: ')
+       
+
+        # self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
+        
+
+
         
     # FOR WEBSITE NAVIGATION
 
@@ -439,5 +455,5 @@ class PerfumeScraper:
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
     my_scraper.open_webpage("https://bloomperfume.co.uk/collections/perfumes")
-    my_scraper.run_scraper(no_pages=1)
+    # my_scraper.run_scraper(no_pages=1)
     my_scraper.close_webpage()

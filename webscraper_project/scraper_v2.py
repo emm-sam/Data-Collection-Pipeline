@@ -382,7 +382,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
             dict_list.append(result)
         return dict_list
 
-    def list_to_dict(self, listofdicts:list):
+    def list_to_dict(self, listofdicts:list) -> dict:
         '''
         Combines dictionaries in a list to the same dictionary
         Args:
@@ -394,9 +394,13 @@ class PerfumeScraper(GenericScraper, DataManipulation):
             new_dict[k] = tuple(new_dict[k] for new_dict in listofdicts)
         return new_dict
 
-    def dict_to_pd(self):
-        
-        pass 
+    def dict_to_pd(self, dict:dict) -> pd.DataFrame:
+        '''
+        Transforms dictionary into a pandas dataframe
+        '''
+        df1 = pd.DataFrame.from_dict(dict, orient='index')
+        df1 = df1.transpose()
+        return df1
 
 example_list = ['https://bloomperfume.co.uk/products/canvas', 'https://bloomperfume.co.uk/products/figuier-noir', 'https://bloomperfume.co.uk/products/pg20-1-sorong']
 example_listfdicts= [{'name': 'Canvas', 'price': '£110.00', 'concentration': '£110.00, 50 ml EdP', 'brand': 'Der Duft', 'description': ['', '']}, {'name': 'Figuier Noir', 'price': '£135.00', 'concentration': '£135.00, 100 ml EdP', 'brand': 'Houbigant', 'description': ['', '', '', '']}, {'name': 'PG20.1 Sorong', 'price': '£138.00', 'concentration': '£138.00, 100 ml EdP', 'brand': 'Pierre Guillaume - Parfumerie Générale', 'description': ['']}]
