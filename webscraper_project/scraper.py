@@ -21,16 +21,7 @@ from sqlalchemy import inspect
 from selenium.webdriver.chrome.options import Options
 # from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
-def read_secrets():
-    filename = os.path.join('secrets.json')
-    try:
-        with open(filename, mode='r') as f:
-            return json.loads(f.read())
-    except FileNotFoundError:
-        return {}
 
-secrets = read_secrets()
-print(secrets)
 
 class PerfumeScraper: 
    
@@ -42,26 +33,22 @@ class PerfumeScraper:
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--disable-dev-shm-usage') 
-        # self.driver = webdriver.Chrome(options=chrome_options)
-        self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver")
+        self.driver = webdriver.Chrome(options=chrome_options)
+        # self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver")
         
         self.url = url
         self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
         self.s3 = boto3.client('s3')
         self.bucket = 'imagebucketaic'
-        # DATABASE_TYPE = 'postgresql'
-        # DBAPI = 'psycopg2'
-        # DATABASE = 'postgres'
-        # ENDPOINT = input('RDS endpoint: ') 
-        # USER = input('User: ')
-        # PASSWORD = input('Password: ') 
-        # PORT = input('Port: ')
+        DATABASE_TYPE = 'postgresql'
+        DBAPI = 'psycopg2'
+        DATABASE = 'postgres'
+        ENDPOINT = 'database-1.ciswmej8oq4i.eu-west-2.rds.amazonaws.com'
+        USER = 'POSTGRES'
+        PASSWORD = input('Password: ') 
+        PORT = '5432'
        
-
-        # self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
-        
-
-
+        self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
         
     # FOR WEBSITE NAVIGATION
 
@@ -403,10 +390,10 @@ class PerfumeScraper:
         #         total_dict = self.add_dict(existing_dict, extra_dict)
         #         self.dump_json(filepath, total_dict, 'Sample_Perfume_Dict.json')
        
-        self.dump_json(filepath='/Users/emmasamouelle/Desktop/Scratch/old_pipeline', dict=extra_dict, dict_name='Sample_Perfume_Dict.json')
+        # self.dump_json(filepath='/Users/emmasamouelle/Desktop/Scratch/old_pipeline', dict=extra_dict, dict_name='Sample_Perfume_Dict.json')
         # cleans the dictionary and turns into pd dataframe, appends to rds 
-        # clean_df = self.data_clean(extra_dict)
-        # self.update_table_rds(data_frame=clean_df, table_name='PerfumeScraper')
+        clean_df = self.data_clean(extra_dict)
+        self.update_table_rds(data_frame=clean_df, table_name='PerfumeScraper')
 
         # s3_noimg = []
         # for x in href_list:
@@ -455,5 +442,5 @@ class PerfumeScraper:
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
     my_scraper.open_webpage("https://bloomperfume.co.uk/collections/perfumes")
-    # my_scraper.run_scraper(no_pages=1)
+    my_scraper.run_scraper(no_pages=1)
     my_scraper.close_webpage()
