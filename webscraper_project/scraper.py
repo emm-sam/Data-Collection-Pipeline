@@ -448,3 +448,4 @@ if __name__ == '__main__':
     my_scraper.open_webpage("https://bloomperfume.co.uk/collections/perfumes")
     my_scraper.run_scraper(no_pages=1)
     my_scraper.close_webpage()
+    #yaml 
