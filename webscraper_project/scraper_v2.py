@@ -423,4 +423,5 @@ if __name__ == '__main__':
     # first_40 = myscraper.list_to_dict(list_dict) tested 20/6
     # myscraper.dump_json('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline', first_40, 'FIRST_40.json') tested 20/6
     myscraper.close_webpage() 
+    # a change
     
