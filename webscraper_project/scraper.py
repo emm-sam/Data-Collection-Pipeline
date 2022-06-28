@@ -25,7 +25,7 @@ import yaml
 
 class PerfumeScraper: 
    
-    def __init__(self, url:str, creds: str='/root/creds/rds_creds.yaml'):
+    def __init__(self, url:str): # creds: str='/root/creds/rds_creds.yaml'):
         # options = webdriver.ChromeOptions() 
         options = Options()
         # options = ChromeOptions()
@@ -51,15 +51,25 @@ class PerfumeScraper:
         # PASSWORD = input('Password: ') 
         # PORT = input('Port: ')
 
-        with open(creds, 'r') as f:
-            creds = yaml.safe_load(f)
-        DATABASE_TYPE= creds['DATABASE_TYPE']
-        DBAPI= creds['DBAPI']
-        USER= creds['USER']
-        PASSWORD= creds['PASSWORD']
-        ENDPOINT= creds['ENDPOINT']
-        PORT= creds['PORT']
-        DATABASE= creds['DATABASE']
+        # with open(creds, 'r') as f:
+        #     creds = yaml.safe_load(f)
+        # DATABASE_TYPE= creds['DATABASE_TYPE']
+        # DBAPI= creds['DBAPI']
+        # USER= creds['USER']
+        # PASSWORD= creds['PASSWORD']
+        # ENDPOINT= creds['ENDPOINT']
+        # PORT= creds['PORT']
+        # DATABASE= creds['DATABASE']
+
+        DATABASE_TYPE=os.environ.get('DATABASE_TYPE')
+        DBAPI=os.environ.get('DBAPI')
+        USER=os.environ.get('USER')
+        PASSWORD=os.environ.get('PASSWORD')
+        ENDPOINT=os.environ.get('ENDPOINT')
+        PORT=os.environ.get('PORT')
+        DATABASE=os.environ.get('DATABASE')
+
+
         self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
         
     # FOR WEBSITE NAVIGATION
