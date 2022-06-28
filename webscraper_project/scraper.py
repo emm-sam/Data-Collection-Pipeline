@@ -63,13 +63,11 @@ class PerfumeScraper:
 
         DATABASE_TYPE=os.environ.get('DATABASE_TYPE')
         DBAPI=os.environ.get('DBAPI')
-        USER=os.environ.get('USER')
-        PASSWORD=os.environ.get('PASSWORD')
+        USER=os.environ.get('RDS_USER')
+        PASSWORD=os.environ.get('RDS_PASSWORD')
         ENDPOINT=os.environ.get('ENDPOINT')
         PORT=os.environ.get('PORT')
         DATABASE=os.environ.get('DATABASE')
-
-
         self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
         
     # FOR WEBSITE NAVIGATION
