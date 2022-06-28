@@ -8,4 +8,5 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
     && unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/ 
 COPY . .
 RUN pip install -r requirements.txt
+EXPOSE 5432
 CMD ["python3", "webscraper_project/scraper.py"]
