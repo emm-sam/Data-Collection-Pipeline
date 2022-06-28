@@ -25,7 +25,7 @@ import yaml
 
 class PerfumeScraper: 
    
-    def __init__(self, url:str, creds: str='config/RDS_creds.yaml'):
+    def __init__(self, url:str): #creds: str='config/RDS_creds.yaml')
         # options = webdriver.ChromeOptions() 
         options = Options()
         # options = ChromeOptions()
@@ -43,15 +43,23 @@ class PerfumeScraper:
         self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
         self.s3 = boto3.client('s3')
         self.bucket = 'imagebucketaic'
-        with open(creds, 'r') as f:
-            creds = yaml.safe_load(f)
-        DATABASE_TYPE= creds['DATABASE_TYPE']
-        DBAPI= creds['DBAPI']
-        USER= creds['USER']
-        PASSWORD= creds['PASSWORD']
-        ENDPOINT= creds['ENDPOINT']
-        PORT= creds['PORT']
-        DATABASE= creds['DATABASE']
+        DATABASE_TYPE = 'postgresql'
+        DBAPI = 'psycopg2'
+        DATABASE = 'postgres'
+        ENDPOINT = input('RDS endpoint: ') 
+        USER = input('User: ')
+        PASSWORD = input('Password: ') 
+        PORT = input('Port: ')
+
+        # with open(creds, 'r') as f:
+        #     creds = yaml.safe_load(f)
+        # DATABASE_TYPE= creds['DATABASE_TYPE']
+        # DBAPI= creds['DBAPI']
+        # USER= creds['USER']
+        # PASSWORD= creds['PASSWORD']
+        # ENDPOINT= creds['ENDPOINT']
+        # PORT= creds['PORT']
+        # DATABASE= creds['DATABASE']
         self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
         
     # FOR WEBSITE NAVIGATION
@@ -448,4 +456,3 @@ if __name__ == '__main__':
     my_scraper.open_webpage("https://bloomperfume.co.uk/collections/perfumes")
     my_scraper.run_scraper(no_pages=1)
     my_scraper.close_webpage()
-    #yaml 
