@@ -25,7 +25,7 @@ import yaml
 
 class PerfumeScraper: 
    
-    def __init__(self, url:str, creds: str='config/RDS_creds.yaml'):
+    def __init__(self, url:str, creds: str='creds/rds_creds.yaml'):
         # options = webdriver.ChromeOptions() 
         options = Options()
         # options = ChromeOptions()

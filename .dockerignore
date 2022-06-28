@@ -1,4 +1,4 @@
 .git
 .cache
-config/
-RDS_creds.yaml
+creds/
+rds_creds.yaml
