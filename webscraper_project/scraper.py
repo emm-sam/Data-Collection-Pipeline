@@ -63,7 +63,7 @@ class PerfumeScraper:
 
         DATABASE_TYPE=os.environ.get('DATABASE_TYPE')
         DBAPI=os.environ.get('DBAPI')
-        USER=os.environ.get('RDS_USER')
+        USER='postgres'
         PASSWORD=os.environ.get('RDS_PASSWORD')
         ENDPOINT=os.environ.get('ENDPOINT')
         PORT=os.environ.get('PORT')
