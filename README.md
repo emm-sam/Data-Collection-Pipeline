@@ -69,27 +69,36 @@ start with 'sudo' when on EC2 (amazon linux 2)
 fixes: 
 - needed to change the security input option for RDS database from my IP to any IP4
 
-## Task: Set up a prometheus container to monitor your scraper
+## Set up a prometheus container to monitor your scraper
 
-- create a prometheus.yml file in the root of EC2 **$ sudo nano /root/prometheus.yml ** 
+- create a prometheus.yml file in the root of EC2   **$ sudo nano /root/prometheus.yml** 
 - configure the targets as the EC2 instance public IP4 address: port
+- port 9090 for prometheus, port 9100 for node exporter, port 9323 for docker
+- change security groups on the EC2 instance to accept these ports
+- localhost works the same as EC2 IP4 for prometheus
+- the docker metrics address can be found in the file **/etc/docker/daemon.json**
+ 
+ ### prometheus.yml
+<img width="574" alt="Screenshot 2022-06-29 at 20 31 31" src="https://user-images.githubusercontent.com/100299675/176520636-3b7bdf26-6451-499c-baf9-ab3419146b23.png">
+
 - prometheus was run in a docker container with the following terminal command:
 
 ```
 $ docker run --rm -d -p 9090:9090 --name prometheus -v /root/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus --config.file=/etc/prometheus/prometheus.yml --web.enable-lifecycle
 ```
 
-
 ## Monitor the docker container 
 
 
 ## Monitor the EC2 instance hardware metrics 
 - Using node exporter
+- download the latest version and run **$./node_exporter** (only works while running)
 > (https://prometheus.io/docs/guides/node-exporter/) 
 
 ## Observe these metrics and create a Grafana dashboard
 - Access prometheus by typing [EC2publicIP4]:9090 into the address bar
-- Prometheus targets working 
+- Prometheus targets working:
+
 <img width="1176" alt="Screenshot 2022-06-29 at 20 07 54" src="https://user-images.githubusercontent.com/100299675/176517200-0ddc9ffa-197a-4ae4-a3f9-6582a9e93220.png">
 
 
