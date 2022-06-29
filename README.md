@@ -50,7 +50,7 @@ inside the dockerfile:
     intall the software in the requirements.txt folder 
     then run the webscraper package
 
-Task: Run docker in an EC2 instance 
+## Task: Run docker in an EC2 instance 
 
 - create EC2 instance 
 - 'sudo yum update' was prompted 
@@ -68,3 +68,13 @@ start with 'sudo' when on EC2 (amazon linux 2)
 
 fixes: 
 - needed to change the security input option for RDS database from my IP to any IP4
+
+## Task: Set up a prometheus container to monitor your scraper
+## Task: Monitor the docker container 
+## Task: Monitor the EC2 instance hardware metrics 
+## Task: Observe these metrics and create a Grafana dashboard
+## Task: Set up a CI/CD pipeline: github workflow 
+## Task: Automate the scraper with cronjobs and multiplexing
+- connect to EC2 instance
+- $ crontab -e # to edit cronjobs 
+
