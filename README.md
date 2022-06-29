@@ -81,8 +81,11 @@ fixes:
 ## Task: Observe these metrics and create a Grafana dashboard
 
 
-## Task: Set up a CI/CD pipeline: github workflow 
+### Task: Set up a CI/CD pipeline: github workflow 
+#### Set up so that a git push on the main branch automatically creates a new docker image with the same name as previous
+- The new image needs to be pulled from docker into the workspace 
 
+See workflow: [https://github.com/emm-sam/Data-Collection-Pipeline/blob/main/.github/workflows/main.yml]
 
 ### Task: Automate the scraper with cronjobs and multiplexing
 #### To automate the scraper the interactable element had to be removed (AWS RDS authentication)
@@ -119,6 +122,7 @@ DATABASE_TYPE=os.environ.get('DATABASE_TYPE')
 ##### - Using tmux as a multiplexor
 The EC2 instance will continue to run to allow the scraper to restart automatically 
 > $ tmux 
+- ensure logged in to docker on EC2
 - manually exit the terminal, the EC2 instance will continue
 - to reconnect use $tmux a
 <img width="1020" alt="Screenshot 2022-06-29 at 17 45 23" src="https://user-images.githubusercontent.com/100299675/176491436-80791d28-1e07-4c85-9fef-929e686a4616.png">
