@@ -69,6 +69,8 @@ start with 'sudo' when on EC2 (amazon linux 2)
 fixes: 
 - needed to change the security input option for RDS database from my IP to any IP4
 
+
+
 ## Set up a prometheus container to monitor your scraper
 
 - create a prometheus.yml file in the root of EC2   **$ sudo nano /root/prometheus.yml** 
@@ -87,6 +89,11 @@ fixes:
 $ docker run --rm -d -p 9090:9090 --name prometheus -v /root/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus --config.file=/etc/prometheus/prometheus.yml --web.enable-lifecycle
 ```
 
+- To update the prometheus docker container if prometheus.yml is altered 
+> $ curl -X POST http://localhost:9090/-/reload 
+
+
+
 ## Monitor the docker container 
 
 
@@ -94,6 +101,8 @@ $ docker run --rm -d -p 9090:9090 --name prometheus -v /root/prometheus.yml:/etc
 - Using node exporter
 - download the latest version and run **$./node_exporter** (only works while running)
 > (https://prometheus.io/docs/guides/node-exporter/) 
+
+
 
 ## Observe these metrics and create a Grafana dashboard
 - Access prometheus by typing [EC2publicIP4]:9090 into the address bar
@@ -105,44 +114,49 @@ $ docker run --rm -d -p 9090:9090 --name prometheus -v /root/prometheus.yml:/etc
 
 
 ## Set up a CI/CD pipeline: github workflow 
-#### Set up so that a git push on the main branch automatically creates a new docker image with the same name as previous
+Set up so that a git push on the main branch automatically creates a new docker image with the same name as previous
 - The new image needs to be pulled from docker into the workspace 
 
 See workflow: (https://github.com/emm-sam/Data-Collection-Pipeline/blob/main/.github/workflows/main.yml)
 
+
+
+
+
+
 ## Automate the scraper with cronjobs and multiplexing
-#### To automate the scraper the interactable element had to be removed (AWS RDS authentication)
-##### - Options:
+To automate the scraper the interactable element had to be removed (AWS RDS authentication)
+#### - Options:
     - pass a yaml or json file to the docker container when run using **-v** flag 
     - Set environment variables to pass to the docker container: 
         - Create a docker-compose.yml file and use **$ docker-compose up**
         - Create an **.env** file and pass to docker container using **--env-file** and **[pathto.envfile]**
             - Format is [VAR]=[VAL] e.g. **DATABASE_TYPE=postgresql**
-##### Useful articles:
+#### Useful articles:
 > - (https://rotempinchevskiboguslavsky.medium.com/environment-variables-in-container-vs-docker-compose-file-2426b2ec7d8b)
 > - (https://docs.docker.com/compose/environment-variables/)
 
-##### - To access the environment variables within the scraper:
+#### - To access the environment variables within the scraper:
 
 ```
 import os
 DATABASE_TYPE=os.environ.get('DATABASE_TYPE')
 ```
-##### - To run the docker container
+#### - To run the docker container
 ```
  $ docker run --name new_scraper --env-file /home/ec2-user/.env emmsam/scraper:latest
 ```
-##### - Extra steps:
+#### - Extra steps:
 - **EXPOSE 5432** (in dockerfile - port)
 - ensure RDS database security input allows access from EC2
 
-##### - Edit cronjobs on EC2 instance with **$ crontab -e**
+#### - Edit cronjobs on EC2 instance with **$ crontab -e**
 <img width="680" alt="Screenshot 2022-06-29 at 17 41 23" src="https://user-images.githubusercontent.com/100299675/176490853-faf1559c-2c86-4fa9-a18f-4c396e7f2c1a.png">
  
  - 0 0 * * * means every night at midnight
  - pulls latest image, runs container, stops container, removes container 
 
-##### - Using tmux as a multiplexor
+#### - Using tmux as a multiplexor
 The EC2 instance will continue to run to allow the scraper to restart automatically 
 > $ tmux 
 - ensure logged in to docker on EC2
