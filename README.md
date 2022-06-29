@@ -107,8 +107,8 @@ DATABASE_TYPE=os.environ.get('DATABASE_TYPE')
  $ docker run --name new_scraper --env-file /home/ec2-user/.env emmsam/scraper:latest
 ```
 ##### - Extra steps:
-    - **EXPOSE 5432** (in dockerfile - port)
-    - ensure RDS database security input allows access from EC2
+- **EXPOSE 5432** (in dockerfile - port)
+- ensure RDS database security input allows access from EC2
 
 ##### - Edit cronjobs on EC2 instance with **$ crontab -e**
 <img width="680" alt="Screenshot 2022-06-29 at 17 41 23" src="https://user-images.githubusercontent.com/100299675/176490853-faf1559c-2c86-4fa9-a18f-4c396e7f2c1a.png">
