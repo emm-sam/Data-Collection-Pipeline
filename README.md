@@ -115,3 +115,11 @@ DATABASE_TYPE=os.environ.get('DATABASE_TYPE')
  
  - 0 0 * * * means every night at midnight
  - pulls latest image, runs container, stops container, removes container 
+
+##### - Using tmux as a multiplexor
+The EC2 instance will continue to run to allow the scraper to restart automatically 
+> $ tmux 
+- manually exit the terminal, the EC2 instance will continue
+- to reconnect use $tmux a
+<img width="1020" alt="Screenshot 2022-06-29 at 17 45 23" src="https://user-images.githubusercontent.com/100299675/176491436-80791d28-1e07-4c85-9fef-929e686a4616.png">
+
