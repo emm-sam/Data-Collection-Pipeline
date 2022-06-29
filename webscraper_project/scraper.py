@@ -72,7 +72,7 @@ class PerfumeScraper:
         
     # FOR WEBSITE NAVIGATION
 
-    def open_webpage(self, url):
+    def open_webpage(self, url:str):
         self.driver.get(url)
         time.sleep(2)
         try:

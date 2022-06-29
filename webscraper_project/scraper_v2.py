@@ -317,17 +317,29 @@ class PerfumeScraper(GenericScraper, DataManipulation):
     def __init__(self):
         super().__init__()
         self.url='https://bloomperfume.co.uk/collections/perfumes'
-        # self.s3 = boto3.client('s3')
-        # self.bucket = input('S3 bucket name: ')
-        # DATABASE_TYPE = 'postgresql'
-        # DBAPI = 'psycopg2'
-        # DATABASE = 'postgres'
-        # ENDPOINT = input('RDS endpoint: ') 
-        # USER = input('User: ')
-        # PASSWORD = input('Password: ') 
-        # PORT = input('Port: ')
+        self.s3 = boto3.client('s3')
+
+        # FOR EC2 INSTANCE 
+        # DATABASE_TYPE=os.environ.get('DATABASE_TYPE')
+        # DBAPI=os.environ.get('DBAPI')
+        # USER='postgres'
+        # PASSWORD=os.environ.get('RDS_PASSWORD')
+        # ENDPOINT=os.environ.get('ENDPOINT')
+        # PORT=os.environ.get('PORT')
+        # DATABASE=os.environ.get('DATABASE')
         # self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
-        # self.engine.connect() 
+
+        # LOCAL MACHINE 
+        self.bucket = input('S3 bucket name: ')
+        DATABASE_TYPE = 'postgresql'
+        DBAPI = 'psycopg2'
+        DATABASE = 'postgres'
+        ENDPOINT = input('RDS endpoint: ') 
+        USER = input('User: ')
+        PASSWORD = input('Password: ') 
+        PORT = input('Port: ')
+        self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
+        self.engine.connect() 
         self.format = (
                 ('name', self.get_xpathtext, '//*[@id="product-page"]/div/div[1]/div/div[1]/h1'),
                 ('price', self.get_xpathtext, '//*[@id="product-page"]/div/div[3]/div/div[1]/div[2]/span[1]'),
@@ -423,5 +435,5 @@ if __name__ == '__main__':
     # first_40 = myscraper.list_to_dict(list_dict) tested 20/6
     # myscraper.dump_json('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline', first_40, 'FIRST_40.json') tested 20/6
     myscraper.close_webpage() 
-    # a change
+
     
