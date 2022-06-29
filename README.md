@@ -84,31 +84,34 @@ fixes:
 ## Task: Set up a CI/CD pipeline: github workflow 
 
 
-## Task: Automate the scraper with cronjobs and multiplexing
-- To automate the scraper I had to adjust it to remove the interactable element (AWS RDS authentication)
-- Options:
+### Task: Automate the scraper with cronjobs and multiplexing
+#### To automate the scraper the interactable element had to be removed (AWS RDS authentication)
+##### - Options:
     - pass a yaml or json file to the docker container when run using **-v** flag 
     - Set environment variables to pass to the docker container: 
         - Create a docker-compose.yml file and use **$ docker-compose up**
         - Create an **.env** file and pass to docker container using **--env-file** and **[pathto.envfile]**
             - Format is [VAR]=[VAL] e.g. **DATABASE_TYPE=postgresql**
-> useful articles:
-> https://rotempinchevskiboguslavsky.medium.com/environment-variables-in-container-vs-docker-compose-file-2426b2ec7d8b 
-> https://docs.docker.com/compose/environment-variables/ 
-- To access the envirnment variables within the scraper:
+##### Useful articles:
+> - (https://rotempinchevskiboguslavsky.medium.com/environment-variables-in-container-vs-docker-compose-file-2426b2ec7d8b)
+> - (https://docs.docker.com/compose/environment-variables/)
+
+##### - To access the environment variables within the scraper:
 
 ```
 import os
 DATABASE_TYPE=os.environ.get('DATABASE_TYPE')
 ```
-
+##### - To run the docker container
 ```
  $ docker run --name new_scraper --env-file /home/ec2-user/.env emmsam/scraper:latest
 ```
-- extra steps:
+##### - Extra steps:
     - **EXPOSE 5432** (in dockerfile - port)
     - ensure RDS database security input allows access from EC2
 
-- edit cronjobs on EC2 instance with **$ crontab -e**
+##### - Edit cronjobs on EC2 instance with **$ crontab -e**
 <img width="673" alt="Screenshot 2022-06-29 at 16 04 53" src="https://user-images.githubusercontent.com/100299675/176472842-367dceac-c6c7-448d-9e7f-10db28ddbd10.png">
-
+ 
+ - 0 0 * * * means every night at midnight
+ - pulls latest image, runs container, stops container, removes container 
