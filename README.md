@@ -70,11 +70,30 @@ fixes:
 - needed to change the security input option for RDS database from my IP to any IP4
 
 ## Task: Set up a prometheus container to monitor your scraper
+
+
 ## Task: Monitor the docker container 
+
+
 ## Task: Monitor the EC2 instance hardware metrics 
+
+
 ## Task: Observe these metrics and create a Grafana dashboard
+
+
 ## Task: Set up a CI/CD pipeline: github workflow 
+
+
 ## Task: Automate the scraper with cronjobs and multiplexing
-- connect to EC2 instance
-- $ crontab -e # to edit cronjobs 
+- To automate the scraper I had to adjust it to remove the interactable element (AWS RDS authentication)
+- Options:
+    - Set environment variables to pass to the docker container: 
+        - Create a docker-compose.yml file and use $ docker-compose up
+        - Create an .env file and pass to docker container using --env-file and [pathto.envfile]    
+```
+ $ docker run --name new_scraper --env-file /home/ec2-user/.env emmsam/scraper:latest
+```
+
+- edit cronjobs on EC2 instance with $ crontab -e #
+<img width="673" alt="Screenshot 2022-06-29 at 16 04 53" src="https://user-images.githubusercontent.com/100299675/176472842-367dceac-c6c7-448d-9e7f-10db28ddbd10.png">
 
