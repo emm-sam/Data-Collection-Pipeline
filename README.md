@@ -69,23 +69,28 @@ start with 'sudo' when on EC2 (amazon linux 2)
 fixes: 
 - needed to change the security input option for RDS database from my IP to any IP4
 
-## Task: Set up a prometheus container to monitor your scraper
+### Task: Set up a prometheus container to monitor your scraper
+
+- create a prometheus.yml file in root in EC2 container 
+
+```
+$ docker run --rm -d -p 9090:9090 --name prometheus -v /root/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus --config.file=/etc/prometheus/prometheus.yml --web.enable-lifecycle
+```
+
+### Task: Monitor the docker container 
 
 
-## Task: Monitor the docker container 
+### Task: Monitor the EC2 instance hardware metrics 
 
 
-## Task: Monitor the EC2 instance hardware metrics 
-
-
-## Task: Observe these metrics and create a Grafana dashboard
+### Task: Observe these metrics and create a Grafana dashboard
 
 
 ### Task: Set up a CI/CD pipeline: github workflow 
 #### Set up so that a git push on the main branch automatically creates a new docker image with the same name as previous
 - The new image needs to be pulled from docker into the workspace 
 
-See workflow: [https://github.com/emm-sam/Data-Collection-Pipeline/blob/main/.github/workflows/main.yml]
+See workflow: (https://github.com/emm-sam/Data-Collection-Pipeline/blob/main/.github/workflows/main.yml)
 
 ### Task: Automate the scraper with cronjobs and multiplexing
 #### To automate the scraper the interactable element had to be removed (AWS RDS authentication)
