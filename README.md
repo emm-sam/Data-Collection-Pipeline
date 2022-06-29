@@ -111,7 +111,7 @@ DATABASE_TYPE=os.environ.get('DATABASE_TYPE')
     - ensure RDS database security input allows access from EC2
 
 ##### - Edit cronjobs on EC2 instance with **$ crontab -e**
-<img width="673" alt="Screenshot 2022-06-29 at 16 04 53" src="https://user-images.githubusercontent.com/100299675/176472842-367dceac-c6c7-448d-9e7f-10db28ddbd10.png">
+<img width="680" alt="Screenshot 2022-06-29 at 17 41 23" src="https://user-images.githubusercontent.com/100299675/176490853-faf1559c-2c86-4fa9-a18f-4c396e7f2c1a.png">
  
  - 0 0 * * * means every night at midnight
  - pulls latest image, runs container, stops container, removes container 
