@@ -62,37 +62,46 @@ to create the docker image (be inside the directory with DOCKERFILE)
     docker build -t nameimage:tag .
 to create/run the container:
     docker run --name containername -dit imagename
--it runs the file in interactable mode
+**-it** runs the file in interactable mode
 -d runs in detached mode (for use on EC2)
 start with 'sudo' when on EC2 (amazon linux 2)
 
 fixes: 
 - needed to change the security input option for RDS database from my IP to any IP4
 
-### Task: Set up a prometheus container to monitor your scraper
+## Task: Set up a prometheus container to monitor your scraper
 
-- create a prometheus.yml file in root in EC2 container 
+- create a prometheus.yml file in the root of EC2 **$ sudo nano /root/prometheus.yml ** 
+- configure the targets as the EC2 instance public IP4 address: port
+- prometheus was run in a docker container with the following terminal command:
 
 ```
 $ docker run --rm -d -p 9090:9090 --name prometheus -v /root/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus --config.file=/etc/prometheus/prometheus.yml --web.enable-lifecycle
 ```
 
-### Task: Monitor the docker container 
+
+## Monitor the docker container 
 
 
-### Task: Monitor the EC2 instance hardware metrics 
+## Monitor the EC2 instance hardware metrics 
+- Using node exporter
+> (https://prometheus.io/docs/guides/node-exporter/) 
+
+## Observe these metrics and create a Grafana dashboard
+- Access prometheus by typing [EC2publicIP4]:9090 into the address bar
+- Prometheus targets working 
+<img width="1176" alt="Screenshot 2022-06-29 at 20 07 54" src="https://user-images.githubusercontent.com/100299675/176517200-0ddc9ffa-197a-4ae4-a3f9-6582a9e93220.png">
 
 
-### Task: Observe these metrics and create a Grafana dashboard
 
 
-### Task: Set up a CI/CD pipeline: github workflow 
+## Set up a CI/CD pipeline: github workflow 
 #### Set up so that a git push on the main branch automatically creates a new docker image with the same name as previous
 - The new image needs to be pulled from docker into the workspace 
 
 See workflow: (https://github.com/emm-sam/Data-Collection-Pipeline/blob/main/.github/workflows/main.yml)
 
-### Task: Automate the scraper with cronjobs and multiplexing
+## Automate the scraper with cronjobs and multiplexing
 #### To automate the scraper the interactable element had to be removed (AWS RDS authentication)
 ##### - Options:
     - pass a yaml or json file to the docker container when run using **-v** flag 
