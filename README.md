@@ -28,9 +28,10 @@ Task: prevent rescraping from remote database of tabular data
 
 create requirements.txt file
 
-Task: create a Docker image which runs the scraper 
+## Create a Docker image which runs the scraper 
 
-'''
+```
+
 from selenium.webdriver.chrome.options import Options
 chrome_options = Options()
 chrome_options.add_argument('--no-sandbox')
@@ -40,17 +41,31 @@ chrome_options.add_argument('--disable-gpu')
 chrome_options.add_argument('--disable-dev-shm-usage') 
 self.driver = webdriver.Chrome(options=chrome_options)
 
-'''
+```
 
-?Add link to the dockerfile
+> ### Dockerfile: (https://github.com/emm-sam/Data-Collection-Pipeline/blob/main/Dockerfile)
 
-inside the dockerfile: 
-    use python 
-    download the latest version of chrome and chrome driver 
-    intall the software in the requirements.txt folder 
-    then run the webscraper package
 
-## Task: Run docker in an EC2 instance 
+
+
+Explanation of the dockerfile:
+
+**FROM** - uses a base of python 3.8
+
+**RUN** - downloads the latest version of chrome and chrome driver to docker image
+
+**COPY** - copies all documents from the project root directory to the docker image (except those in docker ignore file)
+
+**RUN** - intalls the software in the requirements.txt file
+
+**EXPOSE** - port 5432 inside container 
+
+**CMD** - runs the scraper package in the webscraper_project folder using python3
+
+
+
+
+## Run the docker container in an EC2 instance 
 
 - create EC2 instance 
 - 'sudo yum update' was prompted 
@@ -58,9 +73,14 @@ inside the dockerfile:
 - $ aws configure 
 
 terminal commands:
+> $ docker login
 
 to create the docker image (be inside the directory with DOCKERFILE)
-> $ docker build -t nameimage:tag . 
+> $ docker build -t nameimage:tag .
+> $ docker push username/image:tag
+
+once image created and pushed to dockerhub:
+> $ docker pull emmsam/scraper:latest
 
 to create/run the container:
 
