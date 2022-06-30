@@ -81,7 +81,7 @@ fixes:
 - the docker metrics address can be found in the file **/etc/docker/daemon.json**
  
  ### prometheus.yml
-<img width="574" alt="Screenshot 2022-06-29 at 20 31 31" src="https://user-images.githubusercontent.com/100299675/176520636-3b7bdf26-6451-499c-baf9-ab3419146b23.png">
+<img width="450" alt="Screenshot 2022-06-29 at 20 31 31" src="https://user-images.githubusercontent.com/100299675/176520636-3b7bdf26-6451-499c-baf9-ab3419146b23.png">
 
 - prometheus was run in a docker container with the following terminal command:
 
@@ -92,11 +92,7 @@ $ docker run --rm -d -p 9090:9090 --name prometheus -v /root/prometheus.yml:/etc
 - To update the prometheus docker container if prometheus.yml is altered 
 > $ curl -X POST http://localhost:9090/-/reload 
 
-
-
-## Monitor the docker container 
-
-
+## Monitor the docker container(s)
 ## Monitor the EC2 instance hardware metrics 
 - Using node exporter
 - download the latest version and run **$./node_exporter** (only works while running)
@@ -107,9 +103,14 @@ $ docker run --rm -d -p 9090:9090 --name prometheus -v /root/prometheus.yml:/etc
 ## Observe these metrics and create a Grafana dashboard
 - Access prometheus by typing [EC2publicIP4]:9090 into the address bar
 - Prometheus targets working:
+<img width="500" alt="Screenshot 2022-06-29 at 20 07 54" src="https://user-images.githubusercontent.com/100299675/176517200-0ddc9ffa-197a-4ae4-a3f9-6582a9e93220.png">
 
-<img width="1176" alt="Screenshot 2022-06-29 at 20 07 54" src="https://user-images.githubusercontent.com/100299675/176517200-0ddc9ffa-197a-4ae4-a3f9-6582a9e93220.png">
-
+<img width="500" alt="Screenshot 2022-06-30 at 20 05 12" src="https://user-images.githubusercontent.com/100299675/176760015-973b9f61-5dbc-4bac-a83c-337199a89774.png"> 
+<img width="500" alt="Screenshot 2022-06-30 at 20 20 38" src="https://user-images.githubusercontent.com/100299675/176760482-b3f2366c-c5b7-45f5-bc9a-2767b5983f92.png">
+<img width="500" alt="Screenshot 2022-06-30 at 20 20 33" src="https://user-images.githubusercontent.com/100299675/176760397-f73d5332-28e2-4933-bfc6-75503055abc0.png">
+<img width="500" alt="Screenshot 2022-06-30 at 20 03 50" src="https://user-images.githubusercontent.com/100299675/176760194-cf556d03-0239-49d5-8dae-777e2ce7004f.png">
+<img width="500" alt="Screenshot 2022-06-30 at 20 01 01" src="https://user-images.githubusercontent.com/100299675/176760685-45cd6b98-9394-4553-82cd-9b55ecc4b944.png">
+<img width="500" alt="Screenshot 2022-06-30 at 20 00 55" src="https://user-images.githubusercontent.com/100299675/176760769-c0b85e53-ccfb-4bcf-98c9-f2da3b1f7890.png">
 
 
 
