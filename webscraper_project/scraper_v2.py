@@ -78,7 +78,7 @@ class GenericScraper:
         return current_height
 
     # TAKE IN WEBELEMENT
-    def get_text(self, element): #5 #USED
+    def get_text(self, element) -> str: #5 #USED
         '''
         takes in webelement
         returns the text 
@@ -121,7 +121,7 @@ class GenericScraper:
         return variable_list 
 
     # COMBINE NAME AND METHOD 
-    def make_tuple(self, name:str, func, arg:str):
+    def make_tuple(self, name:str, func, arg:str) -> tuple:
         '''
         takes in a function and its argument, and a name
         returns a tuple
@@ -130,7 +130,7 @@ class GenericScraper:
         tuple = (name, var)
         return tuple
 
-    def loop_elements(self, list:list, func, arg:str):
+    def loop_elements(self, list:list, func, arg:str) -> list:
         '''
         takes in a list of webelements, a function and its argument 
         loops through the list 
@@ -145,10 +145,10 @@ class GenericScraper:
             new_list.append(var)
         return new_list
 
-    def tuple_multiple(self, name:str, bin_xpath:str, bin_tag:str, func, arg:str):
+    def tuple_multiple(self, name:str, bin_xpath:str, bin_tag:str, func, arg:str) -> tuple:
         '''
-        takes in xpath and name of value 
-        returns a tuple? key_value pair?
+        takes in name of variable, xpath and tag of bin, function and argument of value to scrape within bin 
+        returns a tuple
         '''
         bin_tags = self.get_bin(bin_xpath=bin_xpath, bin_tag=bin_tag)
         new_list = self.loop_elements(bin_tags, func, arg)
@@ -171,7 +171,7 @@ class GenericScraper:
                 new_list.append(scraped)
             else:
                 print('Error, check your input is valid')
-        new_tuple = (*new_list,) #converst list to tuple 
+        new_tuple = (*new_list,) #converts list to tuple 
         dct = dict((x, y) for x, y in new_tuple) # convert tuples to dict 
         return dct
 
@@ -237,50 +237,6 @@ class DataManipulation:
         '''
         with open(os.path.join(file_path, dict_name), mode='w') as f:
             json.dump(dict, f)
-
-    def uploadDirectory(self, dir_path:str):
-        '''
-        Uploads directory contents directly to S3 bucket
-        Args: 
-            dir_path: path to directory to be uploaded
-        '''
-        bucket = self.bucket
-        for (root, dirs, files) in os.walk(dir_path):
-            for file in files:
-                self.s3.upload_file(os.path.join(root,file),bucket,file)
-
-    def update_databse_rds(self, data_frame:pd.DataFrame, table_name:str):
-        '''
-        Uploads dataframe to specified table in AWS RDS
-        Replaces existing table 
-        '''
-        self.engine.connect()
-        data_frame.to_sql(table_name, self.engine, if_exists='replace')
-
-    def update_table_rds(self, data_frame:pd.DataFrame, table_name:str):
-        '''
-        Uploads dataframe to specified table in AWS RDS
-        Appends data to existing table
-        '''
-        self.engine.connect()
-        data_frame.to_sql(table_name, con = self.engine, if_exists = 'append')
-
-    def inspect_rds(self):
-        self.engine.connect()
-        # table = 'PerfumeScraper'
-        table_data = pd.read_sql_table('PerfumeScraper', self.engine)
-        # pd.read_sql_query('''SELECT * FROM actor LIMIT 10''', engine)
-        return table_data
-
-    def key_exists(self, mykey:str, mybucket:str):
-        try:
-            response = self.s3.list_objects_v2(Bucket=mybucket, Prefix=mykey)
-            if response:
-                for obj in response['Contents']:
-                    if mykey == obj['Key']:
-                        return True
-        except:
-            return False
 
     # def scrape_add(self, list, original_dict):
     #     for url in list:
@@ -357,6 +313,50 @@ class PerfumeScraper(GenericScraper, DataManipulation):
                 # ('related_perfumes', '//*[@id="product-similar"]/div/div', 'div', self.get_relxpathtext, './figure/figcaption/span[1]')
                 )
 
+    def uploadDirectory(self, dir_path:str):
+        '''
+        Uploads directory contents directly to S3 bucket
+        Args: 
+            dir_path: path to directory to be uploaded
+        '''
+        bucket = self.bucket
+        for (root, dirs, files) in os.walk(dir_path):
+            for file in files:
+                self.s3.upload_file(os.path.join(root,file),bucket,file)
+
+    def update_databse_rds(self, data_frame:pd.DataFrame, table_name:str):
+        '''
+        Uploads dataframe to specified table in AWS RDS
+        Replaces existing table 
+        '''
+        # self.engine.connect()
+        data_frame.to_sql(table_name, self.engine, if_exists='replace')
+
+    def update_table_rds(self, data_frame:pd.DataFrame, table_name:str):
+        '''
+        Uploads dataframe to specified table in AWS RDS
+        Appends data to existing table
+        '''
+        self.engine.connect()
+        data_frame.to_sql(table_name, con = self.engine, if_exists = 'append')
+
+    def inspect_rds(self):
+        # self.engine.connect()
+        # table = 'PerfumeScraper'
+        table_data = pd.read_sql_table('PerfumeScraper', self.engine)
+        # pd.read_sql_query('''SELECT * FROM actor LIMIT 10''', engine)
+        return table_data
+
+    def key_exists(self, mykey:str, mybucket:str):
+        try:
+            response = self.s3.list_objects_v2(Bucket=mybucket, Prefix=mykey)
+            if response:
+                for obj in response['Contents']:
+                    if mykey == obj['Key']:
+                        return True
+        except:
+            return False
+
     def get_urls(self, main_url:str) -> list:
         '''
         Scrapes product urls from given url
@@ -394,6 +394,9 @@ class PerfumeScraper(GenericScraper, DataManipulation):
             dict_list.append(result)
         return dict_list
 
+    def bloom_href(self, href:str) -> str:
+        return self.href_to_url(base_url='https://bloomperfume.co.uk/products/', href=href)
+        
     def list_to_dict(self, listofdicts:list) -> dict:
         '''
         Combines dictionaries in a list to the same dictionary
@@ -420,7 +423,7 @@ example_listfdicts= [{'name': 'Canvas', 'price': 'Â£110.00', 'concentration': 'Â
 if __name__ == '__main__':
     myscraper = PerfumeScraper()
     myscraper.open_webpage(myscraper.url)
-    # samplelist = myscraper.loop_scrape(example_list) # list containing dictionaries
+    samplelist = myscraper.loop_scrape(example_list) # list containing dictionaries
     # example_dict = samplelist[0]
     # mydata = DataManipulation()
     # myscraper.inspect_rds(engine=myscraper.engine) 
