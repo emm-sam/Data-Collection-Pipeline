@@ -221,13 +221,11 @@ class GenericScraper:
             pass
     
     def href_to_url(self, base_url:str, href:str) -> str:
-        full_url = base_url + href
-        return full_url
+        return base_url + href
 
     def url_to_href(self, url:str) -> str:
         split = url.split("s/")
-        href = split[1]
-        return href 
+        return split[1]
 
     # def downloads_multiple_img(self, image_list:list, dir_path:str):
     #     '''
@@ -334,7 +332,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         ENDPOINT= creds['ENDPOINT']
         PORT= creds['PORT']
         DATABASE= creds['DATABASE']
-        self.bucket = ''
+        self.bucket = 'imagebucketaic'
         self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
         self.engine.connect() 
         self.format = (
@@ -372,14 +370,15 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         '''
         # self.engine.connect()
         data_frame.to_sql(table_name, self.engine, if_exists='replace')
-
+        
     def update_table_rds(self, data_frame:pd.DataFrame, table_name:str):
         '''
         Uploads dataframe to specified table in AWS RDS
         Appends data to existing table
         '''
-        self.engine.connect()
+        # self.engine.connect()
         data_frame.to_sql(table_name, con = self.engine, if_exists = 'append')
+        print('Adding new perfumes to RDS database...')
 
     def inspect_rds(self):
         # self.engine.connect()
@@ -389,6 +388,9 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         return table_data
 
     def key_exists(self, mykey:str, mybucket:str):
+        '''
+        Checks whether an object exists in a specified S3 bucket
+        '''
         try:
             response = self.s3.list_objects_v2(Bucket=mybucket, Prefix=mykey)
             if response:
@@ -404,9 +406,13 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         Returns: list of urls 
         '''
         self.open_webpage(main_url)
-        container = self.driver.find_element(By.XPATH, '//div[@class="products-list"]')
-        prod_list = container.find_elements(By.CLASS_NAME, "product-name")
-        url_list = self.loop_elements(prod_list, self.get_attr, 'href')
+        try:
+            container = self.driver.find_element(By.XPATH, '//div[@class="products-list"]')
+            prod_list = container.find_elements(By.CLASS_NAME, "product-name")
+            url_list = self.loop_elements(prod_list, self.get_attr, 'href')
+        except NoSuchElementException:
+            url_list = ['None', 'None']
+            print('Could not find urls')
         return url_list
 
     def multiple_urls(self, no_pages:int) -> list:
@@ -434,6 +440,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
             result = self.scrape_page(tup_list = self.format)
             result['url'] = url
             result['href'] = self.url_to_href(url=url)
+            # result['image_link'] = self.get_xpathattr('/html/body/div[4]/main/div[2]/div/div[2]/div/div[2]/div/div/img', 'src')
             dict_list.append(result)
         return dict_list
 

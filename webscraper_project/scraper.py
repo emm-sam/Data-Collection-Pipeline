@@ -1,3 +1,4 @@
+from typing_extensions import Self
 from webbrowser import Chrome
 from selenium import webdriver
 import time
@@ -361,7 +362,6 @@ class PerfumeScraper:
         return table_data
 
     def key_exists(self, mykey, mybucket):
-        # s3_client = boto3.client('s3')
         try:
             response = self.s3.list_objects_v2(Bucket=mybucket, Prefix=mykey)
             if response:
@@ -370,31 +370,94 @@ class PerfumeScraper:
                         return True
         except:
             return False
-            pass
 
-    # INTEGRATING THE ABOVE
+    def find_rdsunscraped(self, scraped_href, rds_href):
+        '''
+        Takes in a list of scraped hrefs and compares to the hrefs stored on RDS
+        Returns a list of urls that do not have results on RDS
+        '''
+        rds_unscraped_url = []
+        rds_unscraped_href = []
+        for x in scraped_href:
+            if x not in rds_href:
+                url = self.bloom_href(x)
+                rds_unscraped_url.append(url)
+                rds_unscraped_href.append(x)
+        return rds_unscraped_url
+
+    def url_to_href(self, url:str) -> str:
+        split = url.split("s/")
+        return split[1]
+
+     # INTEGRATING THE ABOVE
+
+    def href_to_url(self, base_url:str, href:str) -> str:
+        return base_url + href
+
+    def bloom_href(self, href:str) -> str:
+        '''
+        Creates full url from product href
+        '''
+        return self.href_to_url(base_url='https://bloomperfume.co.uk/products/', href=href)
+
+    def rds_columntolist(self, table:str, column:str):
+        # 'PerfumeScraper'
+        rds_df = self.inspect_rds(table)
+        list = rds_df[column].tolist()
+        return list 
+
+    def check_S3(self, href_list, s3_bucket):
+        '''
+        Takes in list of hrefs, checks whether they exist in s3 bucket 
+        Returns list of urls of those without images on S3
+        '''
+        s3_noimg = []
+        for href in href_list:
+            mykey = str(href) + '.jpg'
+            result = self.key_exists(mykey, s3_bucket)
+            if result == False:
+                url = self.bloom_href(href)
+                s3_noimg.append(url)
+            else:
+                pass
+        print("not on s3: ", len(s3_noimg))
+        return s3_noimg
+
+    def url_href_list(self, urls):
+        '''
+        Takes list of urls
+        Returns list of hrefs 
+        '''
+        scraped_href_list = []
+        for x in urls:
+            href = self.url_to_href(x)
+            scraped_href_list.append(href)
+        return scraped_href_list
+
+    # NEEDS WORK
+    # def adds_local_dict(self, dict_filepath:str, new_data:dict):
+    #     hard = '/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/Sample_Perfume_Dict.json'
+    #     existing_dict = self.open_json(dict_filepath)
+    #     combined = self.add_dict(existing_dict, new_data)
+    #     self.dump_json(filepath, total_dict, 'Sample_Perfume_Dict.json')
 
     def run_scraper(self, no_pages):
         # scrapes the urls of all the products 
-        url_links = self.get_multiple_links(no_pages) #42 
-
-        # creates a list of hrefs from the scraped urls (contains all possible hrefs)
-        href_list = []
-        for x in url_links:
-            text = str(x)
-            href = text.split("s/")
-            href_list.append(href[1])
+        scraped_urls = self.get_multiple_links(no_pages) #42 
+        scrape_hrefs = self.url_href_list(scraped_urls)
         
         # inspects the cloud database and produces a list of hrefs stored
-        rds_df = self.inspect_rds(table = 'PerfumeScraper')
-        rds_href_list = rds_df['href'].tolist()
+        # rds_df = self.inspect_rds(table = 'PerfumeScraper') - can delete once checked 
+        # rds_href_list = rds_df['href'].tolist()
+        rds_href_list = self.rds_columntolist('PerfumeScraper', 'href') # check works 
 
         rds_unscraped_url = []
         rds_unscraped_href = []
-        for x in href_list:
+        for x in scraped_href_list:
             if x not in rds_href_list:
-                stem = 'https://bloomperfume.co.uk/products/'
-                url = stem + str(x)
+                url = self.bloom_href(x)
+                # stem = 'https://bloomperfume.co.uk/products/' - can delete if works 
+                # url = stem + str(x)
                 rds_unscraped_url.append(url)
                 rds_unscraped_href.append(x)
 
@@ -411,13 +474,15 @@ class PerfumeScraper:
         #         self.dump_json(filepath, total_dict, 'Sample_Perfume_Dict.json')
        
         # self.dump_json(filepath='/Users/emmasamouelle/Desktop/Scratch/old_pipeline', dict=extra_dict, dict_name='Sample_Perfume_Dict.json')
+
         # cleans the dictionary and turns into pd dataframe, appends to rds 
         clean_df = self.data_clean(extra_dict)
         self.update_table_rds(data_frame=clean_df, table_name='PerfumeScraper')
 
-        # s3_noimg = []
-        # for x in href_list:
-        #     key = str(x) + '.jpg'
+        no_images_s3 = self.check_S3(scraped_href_list, self.bucket)
+        # s3_noimg = [] - keep to check if working
+        # for x in scraped_href_list:
+        #     key = str(x) + '.jpg' # name of image 
         #     result = self.key_exists(mykey=key, mybucket='imagebucketaic')
         #     if result == False:
         #         stem = 'https://bloomperfume.co.uk/products/'
@@ -427,14 +492,6 @@ class PerfumeScraper:
         #         pass
         # print("not on s3: ", len(s3_noimg))
         # print(s3_noimg)
-
-        # if len(s3_noimg) > 1:
-        #     self.downloads_multiple_img(list=s3_noimg, dir_path=filepath)
-        # elif len(s3_noimg) == 1:
-        #     print('needs single download')
-        #     print(s3_noimg)
-        # else:
-        #     pass
 
         # no_img = []
         # for x in rds_unscraped_href:
@@ -446,14 +503,6 @@ class PerfumeScraper:
         #         no_img.append(url)
         #         # self.download_image(url=url, file_name=href, dir_path=filepath)
         # print("no_img:", len(no_img))
-
-        # if len(no_img) > 1:
-        #     self.downloads_multiple_img(list=no_img, dir_path=filepath)
-        # elif len(no_img) == 1:
-        #     print('needs single download')
-        #     print(no_img)
-        # else:
-        #     pass
           
         # self.uploadDirectory(filepath)
         print("----------------------")
