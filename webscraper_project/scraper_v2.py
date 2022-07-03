@@ -1,6 +1,8 @@
 import json
+from pyclbr import Function
 from types import new_class
 from webbrowser import Chrome
+from xml.dom.minidom import Element
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
@@ -20,6 +22,7 @@ import pandas as pd
 import psycopg2
 from sqlalchemy import inspect
 from selenium.webdriver.chrome.options import Options
+import yaml 
 
 class GenericScraper:
     def __init__(self):
@@ -78,63 +81,90 @@ class GenericScraper:
         return current_height
 
     # TAKE IN WEBELEMENT
-    def get_text(self, element) -> str: #5 #USED
+    def get_text(self, element:Element) -> str: #5 #USED
         '''
-        takes in webelement
-        returns the text 
+        Takes in webelement
+        Returns the text 
         '''
-        var = element.text
+        try:
+            var = element.text
+        except NoSuchElementException:
+            var = 'None'
         return var
 
-    def get_attr(self, element, attribute:str): #3 #USED
+    def get_attr(self, element:Element, attr:str): #3 #USED
         '''
-        takes in webelement and attributename
-        returns attribute content
+        Takes in webelement and attributename
+        Returns attribute content
         '''
-        var = element.get_attribute(attribute)
+        try:
+            var = element.get_attribute(attr)
+        except NoSuchElementException:
+            var = 'None'
         return var 
 
-    def get_relxpathtext(self, element, relxpath:str) -> str:
+    def get_relxpathtext(self, element:Element, relxpath:str) -> str:
         '''
         takes in a webelement and relative xpath
         returns text  
         '''
-        var = element.find_element(By.XPATH, relxpath).text
+        try:
+            var = element.find_element(By.XPATH, relxpath).text
+        except NoSuchElementException:
+            var = 'None'
         return var
 
     # TAKE IN XPATH
     def get_xpathtext(self, xpath:str) -> str: #USED
         '''
-        takes in xpath
-        returns text from that xpath
+        Takes in xpath
+        Returns text from that xpath
         '''
-        var = self.driver.find_element(By.XPATH, xpath).text
+        try:
+            var = self.driver.find_element(By.XPATH, xpath).text
+        except NoSuchElementException:
+            var = "None"
+        return var
+
+    def get_xpathattr(self, xpath:str, attr:str) -> str:
+        '''
+        Takes in xpath and attribute name
+        Returns attribute content 
+        '''
+        try:
+            area = self.driver.find_element(By.XPATH, xpath)
+            var = area.get_attribute(attr)
+        except NoSuchElementException:
+            var = "None"
         return var
 
     def get_bin(self, bin_xpath:str, bin_tag:str) -> list: #USED
         '''
-        takes in container xpath and tag of the section to be looped through
-        returns list of webelements 
+        Takes in container xpath and tag of the section to be looped through
+        Returns list of webelements 
         '''
-        bin = self.driver.find_element(By.XPATH, bin_xpath)
-        variable_list = bin.find_elements(By.TAG_NAME, bin_tag)
+        try:
+            bin = self.driver.find_element(By.XPATH, bin_xpath)
+            variable_list = bin.find_elements(By.TAG_NAME, bin_tag)
+        except NoSuchElementException:
+            variable_list = ['None', 'None']
         return variable_list 
 
     # COMBINE NAME AND METHOD 
-    def make_tuple(self, name:str, func, arg:str) -> tuple:
+    def make_tuple(self, name:str, func:Function, arg:str) -> tuple:
         '''
-        takes in a function and its argument, and a name
-        returns a tuple
+        Takes in a function and its argument, and a name
+        Returns a tuple
         '''
         var = func(arg)
         tuple = (name, var)
         return tuple
 
-    def loop_elements(self, list:list, func, arg:str) -> list:
+    def loop_elements(self, list:list, func:Function, arg:str) -> list:
         '''
-        takes in a list of webelements, a function and its argument 
-        loops through the list 
-        returns a list of scraped outputs 
+        Takes in a list of webelements, a function and its argument 
+        Loops through the list 
+        Returns a list of scraped outputs 
         '''
         new_list = []
         for l in list:
@@ -158,8 +188,8 @@ class GenericScraper:
     # DATA COLLECTION
     def scrape_page(self, tup_list:tuple) -> tuple:
         '''
-        takes in a tuple of tuples of length 3 or 5 (must be in the required format)
-        returns a dictionary with the variable name as key
+        Takes in a tuple of tuples of length 3 or 5 (must be in the required format)
+        Returns a dictionary with the variable name as key
         '''
         new_list = []
         for tup in tup_list:
@@ -270,7 +300,7 @@ class DataManipulation:
 
 class PerfumeScraper(GenericScraper, DataManipulation):
 
-    def __init__(self):
+    def __init__(self, creds: str='/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/Data_Collection_Pipeline/creds/rds_creds.yaml'):
         super().__init__()
         self.url='https://bloomperfume.co.uk/collections/perfumes'
         self.s3 = boto3.client('s3')
@@ -286,31 +316,42 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         # self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
 
         # LOCAL MACHINE 
-        self.bucket = input('S3 bucket name: ')
-        DATABASE_TYPE = 'postgresql'
-        DBAPI = 'psycopg2'
-        DATABASE = 'postgres'
-        ENDPOINT = input('RDS endpoint: ') 
-        USER = input('User: ')
-        PASSWORD = input('Password: ') 
-        PORT = input('Port: ')
+        # self.bucket = input('S3 bucket name: ')
+        # DATABASE_TYPE = 'postgresql'
+        # DBAPI = 'psycopg2'
+        # DATABASE = 'postgres'
+        # ENDPOINT = input('RDS endpoint: ') 
+        # USER = input('User: ')
+        # PASSWORD = input('Password: ') 
+        # PORT = input('Port: ')
+
+        with open(creds, 'r') as f:
+            creds = yaml.safe_load(f)
+        DATABASE_TYPE= creds['DATABASE_TYPE']
+        DBAPI= creds['DBAPI']
+        USER= creds['USER']
+        PASSWORD= creds['PASSWORD']
+        ENDPOINT= creds['ENDPOINT']
+        PORT= creds['PORT']
+        DATABASE= creds['DATABASE']
+        self.bucket = ''
         self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
         self.engine.connect() 
         self.format = (
                 ('name', self.get_xpathtext, '//*[@id="product-page"]/div/div[1]/div/div[1]/h1'),
                 ('price', self.get_xpathtext, '//*[@id="product-page"]/div/div[3]/div/div[1]/div[2]/span[1]'),
-                # ('sample', self.get_xpathtext, '//*[@id="product-page"]/div/div[3]/div/div[1]/div[1]/div[2]/a[1]/span'),
-                # ('token', self.get_xpathtext, '//*[@id="product-page"]/div/div[3]/div/div[1]/div[1]/div[3]/a[1]/span'),
+                ('sample', self.get_xpathtext, '//*[@id="product-page"]/div/div[3]/div/div[1]/div[1]/div[2]/a[1]/span'),
+                ('token', self.get_xpathtext, '//*[@id="product-page"]/div/div[3]/div/div[1]/div[1]/div[3]/a[1]/span'),
                 ('concentration', self.get_xpathtext, '//*[@id="product-page"]/div/div[3]/div/div[1]/div[1]/div[1]/a/span'),
                 ('brand', self.get_xpathtext, '//*[@id="product-page"]/div/div[1]/div/div[1]/div/a'),
                 ('description', '//*[@id="product-page"]/div/div[3]/div/div[7]', 'p', self.get_text, 'no_arg'),
                 # ('style', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[5]', 'span', self.get_attr, 'data-search'),
-                # ('flavours', '//*[@id="product-page"]/div/div[1]/div/div[2]', 'div', self.get_attr, 'data-search'),
-                # ('top_notes', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[1]', 'span', self.get_attr, 'data-search'),
-                # ('heart_notes', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[2]', 'span', self.get_attr, 'data-search'),
-                # ('base_notes', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[3]', 'span', self.get_attr, 'data-search'),
+                ('flavours', '//*[@id="product-page"]/div/div[1]/div/div[2]', 'div', self.get_attr, 'data-search'),
+                ('top_notes', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[1]', 'span', self.get_attr, 'data-search'),
+                ('heart_notes', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[2]', 'span', self.get_attr, 'data-search'),
+                ('base_notes', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[3]', 'span', self.get_attr, 'data-search'),
                 # ('tags', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[4]', 'span', self.get_attr, 'data-search'),
-                # ('related_perfumes', '//*[@id="product-similar"]/div/div', 'div', self.get_relxpathtext, './figure/figcaption/span[1]')
+                ('related_perfumes', '//*[@id="product-similar"]/div/div', 'div', self.get_relxpathtext, './figure/figcaption/span[1]')
                 )
 
     def uploadDirectory(self, dir_path:str):
@@ -391,10 +432,15 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         for url in url_list:
             self.open_webpage(url)
             result = self.scrape_page(tup_list = self.format)
+            result['url'] = url
+            result['href'] = self.url_to_href(url=url)
             dict_list.append(result)
         return dict_list
 
     def bloom_href(self, href:str) -> str:
+        '''
+        Creates full url from product href
+        '''
         return self.href_to_url(base_url='https://bloomperfume.co.uk/products/', href=href)
         
     def list_to_dict(self, listofdicts:list) -> dict:
@@ -424,6 +470,7 @@ if __name__ == '__main__':
     myscraper = PerfumeScraper()
     myscraper.open_webpage(myscraper.url)
     samplelist = myscraper.loop_scrape(example_list) # list containing dictionaries
+    print(samplelist)
     # example_dict = samplelist[0]
     # mydata = DataManipulation()
     # myscraper.inspect_rds(engine=myscraper.engine) 
