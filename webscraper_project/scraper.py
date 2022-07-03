@@ -1,3 +1,4 @@
+from fileinput import filename
 from typing_extensions import Self
 from webbrowser import Chrome
 from selenium import webdriver
@@ -252,6 +253,14 @@ class PerfumeScraper:
         return self.dict
 
     def download_image(self, url, file_name, dir_path):
+        '''
+        Downloads image from given product url
+        Args:
+            url: product url
+            file_name: name of file 
+            dir_path: name of directory to downloaded to
+        
+        '''
         self.driver.get(url) 
         time.sleep(1)
         try:
@@ -261,12 +270,13 @@ class PerfumeScraper:
             self.driver.implicitly_wait(2)
             self.driver.get(image_link)
             full_path = dir_path + file_name + '.jpg'
-            urllib.request.urlretrieve(image_link, full_path)
+            if os.path.exists(full_path) == False:
+                urllib.request.urlretrieve(image_link, full_path)
         except NoSuchElementException:
             pass
 
-    def downloads_multiple_img(self, list, dir_path):
-        for url in list:
+    def downloads_multiple_img(self, url_list, dir_path):
+        for url in url_list:
             split = url.split("s/")
             href = split[1]
             full_path = dir_path + href +'.jpg'
@@ -383,6 +393,7 @@ class PerfumeScraper:
                 url = self.bloom_href(x)
                 rds_unscraped_url.append(url)
                 rds_unscraped_href.append(x)
+        print('RDS new entries:', len(rds_unscraped_url))
         return rds_unscraped_url
 
     def url_to_href(self, url:str) -> str:
@@ -441,45 +452,42 @@ class PerfumeScraper:
     #     combined = self.add_dict(existing_dict, new_data)
     #     self.dump_json(filepath, total_dict, 'Sample_Perfume_Dict.json')
 
-    def run_scraper(self, no_pages):
+    def run_scraper(self, no_pages, RDS=True, S3=False, local=False):
         # scrapes the urls of all the products 
-        scraped_urls = self.get_multiple_links(no_pages) #42 
-        scrape_hrefs = self.url_href_list(scraped_urls)
-        
+        new_urls = self.get_multiple_links(no_pages) #42 
+        new_hrefs = self.url_href_list(new_urls)
+
+        if RDS:
         # inspects the cloud database and produces a list of hrefs stored
         # rds_df = self.inspect_rds(table = 'PerfumeScraper') - can delete once checked 
         # rds_href_list = rds_df['href'].tolist()
-        rds_href_list = self.rds_columntolist('PerfumeScraper', 'href') # check works 
+            rds_hrefs = self.rds_columntolist(table='PerfumeScraper', column='href') # check works 
+            rds_tobescraped = self.find_rdsunscraped(new_hrefs, rds_hrefs)
+        # rds_unscraped_url = [] - can delete once works 
+        # rds_unscraped_href = []
+        # for x in scraped_hrefs:
+        #     if x not in rds_href_list:
+        #         url = self.bloom_href(x)
+        #         # stem = 'https://bloomperfume.co.uk/products/' - can delete if works 
+        #         # url = stem + str(x)
+        #         rds_unscraped_url.append(url)
+        #         rds_unscraped_href.append(x)
 
-        rds_unscraped_url = []
-        rds_unscraped_href = []
-        for x in scraped_href_list:
-            if x not in rds_href_list:
-                url = self.bloom_href(x)
-                # stem = 'https://bloomperfume.co.uk/products/' - can delete if works 
-                # url = stem + str(x)
-                rds_unscraped_url.append(url)
-                rds_unscraped_href.append(x)
-
-        print('rds unscraped:', len(rds_unscraped_href))
-
-        # upload existing database (hardcopy)
-        # existing_dict = self.open_json('/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/Sample_Perfume_Dict.json')
-        
         # scrape the new list and add to empty dictionary
-        extra_dict = self.scrape_add(rds_unscraped_url, self.dict)
-        # if extra_dict == True:
-        #     if existing_dict == True:
-        #         total_dict = self.add_dict(existing_dict, extra_dict)
-        #         self.dump_json(filepath, total_dict, 'Sample_Perfume_Dict.json')
-       
-        # self.dump_json(filepath='/Users/emmasamouelle/Desktop/Scratch/old_pipeline', dict=extra_dict, dict_name='Sample_Perfume_Dict.json')
-
+            new_dict = self.scrape_add(rds_tobescraped, self.dict)
         # cleans the dictionary and turns into pd dataframe, appends to rds 
-        clean_df = self.data_clean(extra_dict)
-        self.update_table_rds(data_frame=clean_df, table_name='PerfumeScraper')
+            clean_df = self.data_clean(new_dict)
+            self.update_table_rds(data_frame=clean_df, table_name='PerfumeScraper')
 
-        no_images_s3 = self.check_S3(scraped_href_list, self.bucket)
+        if S3:
+            no_images_s3_urls = self.check_S3(new_hrefs, self.bucket)
+            if len(no_images_s3_urls) > 1:
+                self.downloads_multiple_img(no_images_s3_urls, '/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
+            else:
+                filename = str(no_images_s3_urls[0])
+                self.download_image(filename, '/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
+            self.uploadDirectory('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
+
         # s3_noimg = [] - keep to check if working
         # for x in scraped_href_list:
         #     key = str(x) + '.jpg' # name of image 
@@ -493,6 +501,22 @@ class PerfumeScraper:
         # print("not on s3: ", len(s3_noimg))
         # print(s3_noimg)
 
+        if local:
+            # opens local dictionary 
+            data_directory = '/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/'
+            local_data = 'Sample_dict.json'
+            if os.path.exists(data_directory + local_data) == True:
+                stored_dict = self.open_json(data_directory + local_data)
+            # compares new href to stored entrie 
+            href_list = stored_dict['href']
+            dict_url_list = []
+            for href in new_hrefs:
+                if href not in href_list:
+                    url = self.bloom_href(href)
+                    dict_url_list.append(url)
+            updated_dict = self.scrape_add(dict_url_list, stored_dict)
+            self.dump_json(data_directory, updated_dict, local_data)
+
         # no_img = []
         # for x in rds_unscraped_href:
         #     full_path = filepath + str(x) + '.jpg'
@@ -503,8 +527,14 @@ class PerfumeScraper:
         #         no_img.append(url)
         #         # self.download_image(url=url, file_name=href, dir_path=filepath)
         # print("no_img:", len(no_img))
-          
+        
+        # upload existing database (hardcopy)
+        # existing_dict = self.open_json('/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/Sample_Perfume_Dict.json')
         # self.uploadDirectory(filepath)
+
+        # upload existing database (hardcopy)
+        # existing_dict = self.open_json('/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/Sample_Perfume_Dict.json')
+        # self.dump_json(filepath='/Users/emmasamouelle/Desktop/Scratch/old_pipeline', dict=extra_dict, dict_name='Sample_Perfume_Dict.json')
         print("----------------------")
         
 
