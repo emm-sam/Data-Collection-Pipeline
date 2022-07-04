@@ -64,10 +64,14 @@ class PerfumeScraper:
             self.bucket = 'imagebucketaic'
 
         self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
-        
+        self.engine.connect() 
+
     # FOR WEBSITE NAVIGATION
 
     def open_webpage(self, url:str):
+        '''
+        Takes in url and opens the webpage
+        '''
         self.driver.get(url)
         time.sleep(2)
         try:
@@ -353,15 +357,15 @@ class PerfumeScraper:
                 self.s3.upload_file(os.path.join(root,file),bucket,file)
 
     def update_databse_rds(self, data_frame, table_name):
-        self.engine.connect()
+        # self.engine.connect()
         data_frame.to_sql(table_name, self.engine, if_exists='replace')
 
     def update_table_rds(self, data_frame, table_name):
-        self.engine.connect()
+        # self.engine.connect()
         data_frame.to_sql(table_name, con = self.engine, if_exists = 'append')
 
     def inspect_rds(self, table_name):
-        self.engine.connect()
+        # self.engine.connect()
         table_data = pd.read_sql_table(self.table, self.engine)
         # pd.read_sql_query('''SELECT * FROM actor LIMIT 10''', engine)
         return table_data
