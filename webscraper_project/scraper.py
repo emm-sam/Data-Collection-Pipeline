@@ -1,4 +1,5 @@
 from webbrowser import Chrome
+from xmlrpc.client import Boolean
 from selenium import webdriver
 import time
 from time import sleep
@@ -424,18 +425,35 @@ class PerfumeScraper:
             for file in files:
                 self.s3.upload_file(os.path.join(root,file),bucket,file)
 
-    def update_database_rds(self, data_frame, table_name):
+    def update_database_rds(self, data_frame:pd.DataFrame, table_name:str):
+        '''
+        Creates/ replaces an RDS table with data stored as a dataframe
+        Args:
+            data_frame: data to be uploaded
+            table_name: RDS table name 
+        '''
         data_frame.to_sql(table_name, self.engine, if_exists='replace')
 
-    def update_table_rds(self, data_frame, table_name):
+    def update_table_rds(self, data_frame:pd.DataFrame, table_name:str):
         data_frame.to_sql(table_name, con = self.engine, if_exists = 'append')
 
-    def inspect_rds(self, table_name):
+    def inspect_rds(self, table_name:str) -> pd.DataFrame:
+        '''
+        Reads rds database data into a pandas database
+        Args: table_name: table to be inspected
+        '''
         table_data = pd.read_sql_table(self.table, self.engine)
         # pd.read_sql_query('''SELECT * FROM actor LIMIT 10''', engine)
         return table_data
 
-    def key_exists(self, mykey, mybucket):
+    def key_exists(self, mykey, mybucket) -> bool:
+        '''
+        Inspects S3 bucket to see if a file exists
+        Args:
+            mykey: filename to be inspected
+            mybucket: name of S3 bucket to be searched
+        Returns: boolean value if the keys exists
+        '''
         try:
             response = self.s3.list_objects_v2(Bucket=mybucket, Prefix=mykey)
             if response:
@@ -445,10 +463,13 @@ class PerfumeScraper:
         except:
             return False
 
-    def find_rdsunscraped(self, scraped_href, rds_href):
+    def find_rdsunscraped(self, scraped_href:list, rds_href:list) -> list:
         '''
         Takes in a list of scraped hrefs and compares to the hrefs stored on RDS
-        Returns a list of urls that do not have results on RDS
+        Args:
+            scraped_href: list of new product hrefs scraped 
+            rds_href: list of hrefs stored on RDS database
+        Returns: a list of urls of products that do not have results on RDS
         '''
         rds_unscraped_url = []
         rds_unscraped_href = []
@@ -461,10 +482,16 @@ class PerfumeScraper:
         return rds_unscraped_url
 
     def url_to_href(self, url:str) -> str:
+        '''
+        Converts bloom product url to href
+        '''
         split = url.split("s/")
         return split[1]
 
     def href_to_url(self, base_url:str, href:str) -> str:
+        '''
+        Adds href to a given url
+        '''
         return base_url + href
 
     def bloom_href(self, href:str) -> str:
@@ -473,16 +500,24 @@ class PerfumeScraper:
         '''
         return self.href_to_url(base_url='https://bloomperfume.co.uk/products/', href=href)
 
-    def rds_columntolist(self, table:str, column:str):
-        # 'PerfumeScraper'
+    def rds_columntolist(self, table:str, column:str) -> list:
+        '''
+        Converts data in a specified RDS table column to a list 
+        Args:
+            table: table to be insected
+            column: name of column to be inspected
+        Returns: a list containing all column data
+        '''
         rds_df = self.inspect_rds(table_name=table)
         list = rds_df[column].tolist()
         return list 
 
-    def check_S3(self, href_list, s3_bucket):
+    def check_S3(self, href_list:list, s3_bucket:str) -> list:
         '''
-        Takes in list of hrefs, checks whether they exist in s3 bucket 
-        Returns list of urls of those without images on S3
+        Takes in list of hrefs, checks whether their corresponding images exist in S3 bucket
+        Args:
+            href_list: list of product hrefs to  be checked against images on S3 bucket
+        Returns: list of urls of products without images on S3
         '''
         s3_noimg = []
         for href in href_list:
@@ -496,7 +531,7 @@ class PerfumeScraper:
         print("Not on s3: ", len(s3_noimg))
         return s3_noimg
 
-    def url_href_list(self, urls):
+    def url_href_list(self, urls:str) -> list:
         '''
         Takes list of urls
         Returns list of hrefs 
@@ -510,14 +545,28 @@ class PerfumeScraper:
     # INTEGRATING THE ABOVE
 
     def run_scraper(self, no_pages, RDS=True, S3=False, local=False):
+        '''
+        This method integrates the other methods above.
+        Args:
+            no_pages: number of product pages to be scraped
+            RDS: toggles whether to check and update the RDS database (default on)
+            S3: toggles whether to check and update S3 for product images (default off)
+            local: toggles whether to check and update local json file of product data (default off)
+
+        '''
+
         # scrapes the urls of all the products 
         new_urls = self.get_multiple_links(no_pages) # 42 maximum 
         new_hrefs = self.url_href_list(new_urls)
 
         if RDS:
+            '''
+            Compares cloud database entries to the newly scraped urls. 
+            Only scrapes products that do not exist on the cloud. 
+            '''
             # inspects the cloud database and produces a list of hrefs stored
             rds_hrefs = self.rds_columntolist(table=self.table, column='href')
-            rds_tobescraped = self.find_rdsunscraped(new_hrefs, rds_hrefs) # list of urls
+            rds_tobescraped = self.find_rdsunscraped(new_hrefs, rds_hrefs)
             # scrape the new list and add to empty dictionary
             new_dict = self.scrape_add(rds_tobescraped, self.dict)
             # cleans the dictionary and turns into pd dataframe, appends to rds 
@@ -525,6 +574,10 @@ class PerfumeScraper:
             self.update_table_rds(data_frame=clean_df, table_name=self.table)
 
         if S3:
+            '''
+            Compares images stored on S3 with the newly scraped urls. 
+            Only downloads and uploads images that do not exist on S3.  
+            '''
             no_images_s3_urls = self.check_S3(new_hrefs, self.bucket)
             if len(no_images_s3_urls) > 1:
                 self.downloads_multiple_img(no_images_s3_urls, '/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
@@ -540,7 +593,12 @@ class PerfumeScraper:
             print("Uploading folder to S3...")
 
         if local:
-            # cpens local dictionary 
+            '''
+            Compares product data stored locally to newly scraped urls. 
+            Only scrapes from products not present in the database. 
+            Creates database if it does not exist already. 
+            '''
+            # opens local dictionary 
             data_directory = '/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/'
             local_data = 'Sample_dict.json'
             if os.path.exists(data_directory + local_data) == True:
