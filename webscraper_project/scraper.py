@@ -24,7 +24,18 @@ from webdriver_manager.chrome import ChromeDriverManager
 import yaml
 
 class PerfumeScraper: 
-   
+    '''
+    This scraper class scrapes perfume product data from the website bloomperfume.co.uk.
+    It can upload product data to AWS RDS database, upload raw data (images and files) to an S3 datalake and create a local json file of product data.
+    It can be used on a local machine (Mac) or used remotely
+    Args:
+        url: base product page with all products to be scraped
+        container: toggles whether being used on local computer or remotely on a docker container (default on)
+    Outputs:
+        Table on RDS database
+        Files and images on AWS S3 bucket
+        JSON file of product data
+    '''
     def __init__(self, url:str, container=True, creds: str='/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/Data_Collection_Pipeline/creds/rds_creds.yaml'):
         self.url = url
         self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
@@ -554,7 +565,6 @@ class PerfumeScraper:
             local: toggles whether to check and update local json file of product data (default off)
 
         '''
-
         # scrapes the urls of all the products 
         new_urls = self.get_multiple_links(no_pages) # 42 maximum 
         new_hrefs = self.url_href_list(new_urls)
