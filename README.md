@@ -134,7 +134,13 @@ Main tasks overview:
 	bloom_href (converts data)
 
 		href_to_url (converts data)
+		
+	scrape_add (scrapes pages from list of urls and adds to given dictionary)
 
+		scrape_product (scrapes text data from a single product page) 
+
+			open_webpage (opens webpage and clicks on accept cookies button)
+			
 	close_webpage (terminates the webpage)
 
 **Python learnings:**
