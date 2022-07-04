@@ -1,31 +1,28 @@
 # Data-Collection-Pipeline
 
+### Main steps: 
+- build a web scraper (stores text and image data locally and on the cloud)
+- build a testing suite for scraper 
+- build a docker image to run the scraper remotely 
+- run the docker container on an EC2 instance
+- monitor the EC2 and docker metrics with Prometheus
+- visualise these metrics on Grafana
+- create a CI/CD pipeline using github workflows, cronjobs, tmux 
+
+
 Task: create methods to navigate a webpage
-
 Task: bypass cookies 
-
 Task: create method to get product page urls 
-
 Task: retrive text and image data from product page 
-
 Task: store data in dictionary 
-
 Task: save dictionary locally 
-
 Task: create method to find image link and download images locally 
-
 Task: create unit tests for each public method 
-
 Task: upload raw data folder to AWS S3
-
 Task: upload tabular data to AWS RDS
-
 Task: prevent rescraping of data (locally)
-
 Task: prevent duplicate images being collected 
-
 Task: prevent rescraping from remote database of tabular data 
-
 create requirements.txt file
 
 ## Create a Docker image which runs the scraper 
@@ -121,7 +118,6 @@ $ docker run --rm -d -p 9090:9090 --name prometheus -v /root/prometheus.yml:/etc
 - Use node exporter
 - download the latest version and run **$./node_exporter** (only works while running)
 > (https://prometheus.io/docs/guides/node-exporter/) 
-
 
 
 ## Observe these metrics and create a Grafana dashboard
