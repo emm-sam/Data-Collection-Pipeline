@@ -1,5 +1,21 @@
 # Data-Collection-Pipeline
 
+This project was undertaken as part of the AiCore career accelerator program. The aim of the project was to create an industry-grade data collection pipeline collecting information from a website of our choice. 
+
+### Technologies used: 
+- Python
+- Selenium WebDriver 
+- Unittest (unit testing framework)
+- Sqlalchemy and Psycopg2 (Python SQL toolkit and Object Relational Mapper)(Python PostgreSQL database adaptor)
+- Boto3 (Python API for AWS services)
+- Amazon Web Services (AWS)
+    - Amazon Elastic Compute Cloud (EC2) -  virtual server
+    - Amazon Relational Database Service (RDS) - cloud database
+    - Amazon Simple Storage Service (S3) - data lake
+- Docker (open platform for developing, shipping, and running applications)
+- Prometheus (event monitoring and alerting)
+- Grafana (analytics and interactive visualization
+
 ### Main steps: 
 - build a web scraper (stores text and image data locally and on the cloud)
 - build a testing suite for scraper 
