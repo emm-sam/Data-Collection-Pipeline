@@ -20,7 +20,6 @@ from sqlalchemy import inspect
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver import ChromeOptions
 from webdriver_manager.chrome import ChromeDriverManager
-# from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import yaml
 
 class PerfumeScraper: 
@@ -81,43 +80,73 @@ class PerfumeScraper:
             pass
 
     def close_webpage(self):
+        '''
+        Closes browser
+        '''
         self.driver.quit()
 
     def go_back(self):
+        '''
+        Goes back to previous loaded page
+        '''
         self.driver.back()
 
-    def get_current_url(self):
+    def get_current_url(self) -> str:
+        '''
+        Returns current url
+        '''
         return self.driver.current_url
 
     def search_website(self, input:str):
+        '''
+        Loads search results from bloom website
+        Args: 'input' the word to be searched 
+        '''
         url = 'https://bloomperfume.co.uk/search?q=' + input
         self.driver.get(url)
 
-    def scroll_down(self, no_seconds):
+    def scroll_down(self, no_seconds:int):
+        '''
+        Scrolls down the current webpage for the number of seconds specified in the args
+        '''
         start_time = time.time()
         while (time.time() - start_time) < no_seconds:
             self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.DOWN)
         else:
             pass
     
-    def scroll_up(self, no_seconds):
+    def scroll_up(self, no_seconds:int):
+        '''
+        Scrolls up the current webpage for the number of seconds specified in args
+        '''
         start_time2 = time.time()
         while (time.time() - start_time2) < no_seconds:
             self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.PAGE_UP)
         else:
             pass
 
-    def get_full_height(self):
+    def get_full_height(self) -> str:
+        '''
+        Finds the total height of the webpage
+        '''
         total_height = str(self.driver.execute_script("return document.body.scrollHeight"))
         return total_height
         
-    def get_scroll_height(self):
+    def get_scroll_height(self) -> str:
+        '''
+        Finds the current scroll height of the webpage
+        '''
         current_height = self.driver.execute_script("return window.pageYOffset + window.innerHeight")
         return current_height
 
     # COLLECTING DATA FROM THE WEBSITE
 
-    def get_links(self, url):
+    def get_links(self, url:str) -> list:
+        '''
+        Scrapes product urls from webpage
+        Args: 'url': full product list webpage
+        Returns: list of urls scraped from the webpage
+        '''
         self.open_webpage(url)
         time.sleep(1)
         try:
@@ -131,7 +160,12 @@ class PerfumeScraper:
             pass
         return link_list
 
-    def get_multiple_links(self, number_pages):
+    def get_multiple_links(self, number_pages:int) -> list:
+        '''
+        Scrapes urls from multiple product pages
+        Args: number_pages: number of pages to be scraped for urls
+        Returns: a list of product urls 
+        '''
         all_links = []
         for i in range(1, (number_pages+1), 1):
             paged_url = self.url + "?page=" + str(i)
@@ -139,23 +173,30 @@ class PerfumeScraper:
             all_links += list_i
         return all_links
 
-    def clean_list(self, list):
+    def clean_list(self, list:list) -> list:
+        '''
+        Removes null values from a list
+        '''
         cleaned_list = []
         for l in list:
             if l != None:
                 cleaned_list.append(l)
         return cleaned_list
 
-    def scrape_product(self, url):
+    def scrape_product(self, url:str) -> dict:
+        '''
+        Scrapes the product webpage for required information
+        Args: url: product page url to be scraped
+        Returns: a product dictionary with the variable name as key and result as the value
+        '''
         self.open_webpage(url)
         product_dictionary = {"href":[], "complete":[], "uuid":[], "name":[], "id":[], "price":[], "strength":[], "category":[], "brand":[], "flavours":[], "top notes":[], "heart notes":[], "base notes":[], "image link":[]}
-        
         current_url = self.driver.current_url
         split = current_url.split("s/")
         product_dictionary['href']=split[1]
         product_dictionary['complete']='True'
         product_dictionary['uuid']=str(uuid.uuid4())
-    
+
         try:
             main_details = self.driver.find_element(By.XPATH, '//*[@id="product-page"]/div/div[3]/div/div[1]/div[1]/div[1]/a')
             product_number = main_details.get_attribute("data-product") 
@@ -227,11 +268,15 @@ class PerfumeScraper:
             product_dictionary['complete'] = 'False'
         return(product_dictionary)
 
-    def scrape_add(self, list, original_dict):
+    def scrape_add(self, url_list:list, original_dict:dict) -> dict:
         '''
-        Takes in a list of urls and dictionary, scrapes and adds to dictionary
+        Takes in a list of product urls to be scraped and an existing dictionary: scrapes and adds to dictionary
+        Args:
+            list: list of urls to be scraped
+            original_dict: dictionary to be added to
+        Returns: dictionary updated with the new product data
         '''
-        for url in list:
+        for url in url_list:
             perfume = self.scrape_product(url)
             original_dict["href"].append(perfume["href"])
             original_dict["complete"].append(perfume["complete"])
@@ -249,10 +294,7 @@ class PerfumeScraper:
             original_dict["image link"].append(perfume["image link"])
         return original_dict
 
-    def make_test_dict(self):
-        return self.dict
-
-    def download_image(self, url, file_name, dir_path):
+    def download_image(self, url:str, file_name:str, dir_path:str):
         '''
         Downloads image from given product url
         Args:
@@ -275,7 +317,13 @@ class PerfumeScraper:
         except NoSuchElementException:
             pass
 
-    def downloads_multiple_img(self, url_list, dir_path):
+    def downloads_multiple_img(self, url_list:list, dir_path:str):
+        '''
+        Downloads multiple images to the directory path given
+        Args:
+            url_list: list of urls with images to be downloaded
+            dir_path: path to directory to download to
+        '''
         for url in url_list:
             split = url.split("s/")
             href = split[1]
@@ -287,11 +335,24 @@ class PerfumeScraper:
 
     # MANIPULATING AND STORING THE DATA 
 
-    def dump_json(self, filepath, dict, dict_name):
+    def dump_json(self, filepath:str, dict:dict, dict_name:str):
+        '''
+        Stores ditionary as json file
+        Args:
+            filepath: path to the directory to store the json
+            dict: dictionary to be stored
+            dict_name: name of json file (must end .json)
+        '''
         with open(os.path.join(filepath, dict_name), mode='w') as f:
             json.dump(dict, f)
 
-    def data_clean(self, dictionary):
+    def data_clean(self, dictionary:dict) -> pd.DataFrame:
+        '''
+        Converts dictionary to pandas dataframe and cleans the data
+        Args: dictionary: dictionary to be converted
+        Returns: a cleaned dataframe
+        '''
+
         def split_rename(df_column, new_name_stem):
             new_df = pd.DataFrame(df_column.tolist())
             column_list = new_df.columns
@@ -342,30 +403,34 @@ class PerfumeScraper:
         subbn = split_rename(df2['base notes'], 'BN')
 
         df3 = pd.concat([df2, subf, subtn, subhn, subbn], axis=1)
-        # clean_dict = df3.to_dict()
         return df3
 
-    def open_json(self, file_path):
+    def open_json(self, file_path:str) -> dict:
+        '''
+        Opens json file to dictionary 
+        Args: filepath: path to json file to be uploaded
+        '''
         with open(file_path, mode='r') as f:
             data = json.load(f)
             return data
 
-    def uploadDirectory(self, dir_path):
+    def upload_directory(self, dir_path:str):
+        '''
+        Uploads a diretory directly to S3 bucket
+        Args: dir_path: path to directory to be uploaded
+        '''
         bucket = self.bucket
         for (root, dirs, files) in os.walk(dir_path):
             for file in files:
                 self.s3.upload_file(os.path.join(root,file),bucket,file)
 
-    def update_databse_rds(self, data_frame, table_name):
-        # self.engine.connect()
+    def update_database_rds(self, data_frame, table_name):
         data_frame.to_sql(table_name, self.engine, if_exists='replace')
 
     def update_table_rds(self, data_frame, table_name):
-        # self.engine.connect()
         data_frame.to_sql(table_name, con = self.engine, if_exists = 'append')
 
     def inspect_rds(self, table_name):
-        # self.engine.connect()
         table_data = pd.read_sql_table(self.table, self.engine)
         # pd.read_sql_query('''SELECT * FROM actor LIMIT 10''', engine)
         return table_data
@@ -464,18 +529,18 @@ class PerfumeScraper:
             if len(no_images_s3_urls) > 1:
                 self.downloads_multiple_img(no_images_s3_urls, '/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
                 print("Downloading images..")
-                self.uploadDirectory('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
+                self.upload_directory('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
             elif len(no_images_s3_urls) == 1:
                 filename = str(no_images_s3_urls[0])
                 self.download_image(filename, '/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
                 print("Downloading image..")
-                self.uploadDirectory('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
+                self.upload_directory('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
             else:
                 pass
             print("Uploading folder to S3...")
 
         if local:
-            # opens local dictionary 
+            # cpens local dictionary 
             data_directory = '/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/'
             local_data = 'Sample_dict.json'
             if os.path.exists(data_directory + local_data) == True:
@@ -495,9 +560,8 @@ class PerfumeScraper:
 
         print("Job complete")
         print("-------------------")
+        self.close_webpage()
 
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes", container=False)
-    my_scraper.open_webpage("https://bloomperfume.co.uk/collections/perfumes")
     my_scraper.run_scraper(no_pages=1)
-    my_scraper.close_webpage()
