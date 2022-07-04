@@ -205,26 +205,27 @@ Steps:
 - create EC2 instance 
 - download docker within EC2 instance https://www.cyberciti.biz/faq/how-to-install-docker-on-amazon-linux-2/ using these instructions 
 - $ aws configure 
+- change the security input option for RDS database from my IP to any IP4
+- 
 
-terminal commands:
-> $ docker login
+	**terminal commands:**
+	> $ docker login
 
-to create the docker image (be inside the directory with DOCKERFILE)
-> $ docker build -t nameimage:tag .
-> $ docker push username/image:tag
+	to create the docker image (be inside the directory with DOCKERFILE)
+	> $ docker build -t nameimage:tag .
+	> $ docker push username/image:tag
 
-once image created and pushed to dockerhub:
-> $ docker pull emmsam/scraper:latest
+	once image created and pushed to dockerhub:
+	> $ docker pull emmsam/scraper:latest
 
-to create/run the container:
+	to create/run the container:
 
-> $ docker run --name containername -dit imagename <
-**-it** runs the file in interactable mode
-**-d** runs in detached mode (for use on EC2)
+	> $ docker run --name containername -dit imagename <
 
-fixes: 
-- needed to change the security input option for RDS database from my IP to any IP4
+	**-it** runs the file in interactable mode
 
+	**-d** runs in detached mode (for use on EC2)
+		
 
 ## Set up a prometheus container to monitor your scraper
 Steps:
