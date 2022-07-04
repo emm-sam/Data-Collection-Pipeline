@@ -1,5 +1,3 @@
-from fileinput import filename
-from typing_extensions import Self
 from webbrowser import Chrome
 from selenium import webdriver
 import time
@@ -27,49 +25,44 @@ import yaml
 
 class PerfumeScraper: 
    
-    def __init__(self, url:str): # creds: str='/root/creds/rds_creds.yaml'):
-        # options = webdriver.ChromeOptions() 
-        options = Options()
-        # options = ChromeOptions()
-        options.add_argument('--no-sandbox')
-        options.add_argument('--window-size=1920,1080')
-        options.add_argument('--headless')
-        options.add_argument('--disable-gpu')
-        options.add_argument('--disable-dev-shm-usage') 
-        options.add_argument('--remote-debugging-port=9222')
-        self.driver = webdriver.Chrome(options=options)
-        # self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver")
-        # self.driver = Chrome(ChromeDriverManager().install(), options=options)
-
+    def __init__(self, url:str, container=True, creds: str='/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/Data_Collection_Pipeline/creds/rds_creds.yaml'):
         self.url = url
         self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
         self.s3 = boto3.client('s3')
         self.bucket = 'imagebucketaic'
-        # DATABASE_TYPE = 'postgresql'
-        # DBAPI = 'psycopg2'
-        # DATABASE = 'postgres'
-        # ENDPOINT = input('RDS endpoint: ') 
-        # USER = input('User: ')
-        # PASSWORD = input('Password: ') 
-        # PORT = input('Port: ')
+        self.table = 'PerfumeScraper'
+        
+        if container:
+            options = Options()
+            options.add_argument('--no-sandbox')
+            options.add_argument('--window-size=1920,1080')
+            options.add_argument('--headless')
+            options.add_argument('--disable-gpu')
+            options.add_argument('--disable-dev-shm-usage') 
+            options.add_argument('--remote-debugging-port=9222')
+            self.driver = webdriver.Chrome(options=options)
+            DATABASE_TYPE=os.environ.get('DATABASE_TYPE')
+            DBAPI=os.environ.get('DBAPI')
+            USER='postgres'
+            PASSWORD=os.environ.get('RDS_PASSWORD')
+            ENDPOINT=os.environ.get('ENDPOINT')
+            PORT=os.environ.get('PORT')
+            DATABASE=os.environ.get('DATABASE')
 
-        # with open(creds, 'r') as f:
-        #     creds = yaml.safe_load(f)
-        # DATABASE_TYPE= creds['DATABASE_TYPE']
-        # DBAPI= creds['DBAPI']
-        # USER= creds['USER']
-        # PASSWORD= creds['PASSWORD']
-        # ENDPOINT= creds['ENDPOINT']
-        # PORT= creds['PORT']
-        # DATABASE= creds['DATABASE']
+        else:
+            self.driver = webdriver.Chrome("/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/chromedriver")
+            # self.driver = Chrome(ChromeDriverManager().install(), options=options)
+            with open(creds, 'r') as f:
+                creds = yaml.safe_load(f)
+            DATABASE_TYPE= creds['DATABASE_TYPE']
+            DBAPI= creds['DBAPI']
+            USER= creds['USER']
+            PASSWORD= creds['PASSWORD']
+            ENDPOINT= creds['ENDPOINT']
+            PORT= creds['PORT']
+            DATABASE= creds['DATABASE']
+            self.bucket = 'imagebucketaic'
 
-        DATABASE_TYPE=os.environ.get('DATABASE_TYPE')
-        DBAPI=os.environ.get('DBAPI')
-        USER='postgres'
-        PASSWORD=os.environ.get('RDS_PASSWORD')
-        ENDPOINT=os.environ.get('ENDPOINT')
-        PORT=os.environ.get('PORT')
-        DATABASE=os.environ.get('DATABASE')
         self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
         
     # FOR WEBSITE NAVIGATION
@@ -231,6 +224,9 @@ class PerfumeScraper:
         return(product_dictionary)
 
     def scrape_add(self, list, original_dict):
+        '''
+        Takes in a list of urls and dictionary, scrapes and adds to dictionary
+        '''
         for url in list:
             perfume = self.scrape_product(url)
             original_dict["href"].append(perfume["href"])
@@ -364,10 +360,9 @@ class PerfumeScraper:
         self.engine.connect()
         data_frame.to_sql(table_name, con = self.engine, if_exists = 'append')
 
-    def inspect_rds(self, table):
+    def inspect_rds(self, table_name):
         self.engine.connect()
-        # table = 'PerfumeScraper'
-        table_data = pd.read_sql_table('PerfumeScraper', self.engine)
+        table_data = pd.read_sql_table(self.table, self.engine)
         # pd.read_sql_query('''SELECT * FROM actor LIMIT 10''', engine)
         return table_data
 
@@ -400,8 +395,6 @@ class PerfumeScraper:
         split = url.split("s/")
         return split[1]
 
-     # INTEGRATING THE ABOVE
-
     def href_to_url(self, base_url:str, href:str) -> str:
         return base_url + href
 
@@ -413,7 +406,7 @@ class PerfumeScraper:
 
     def rds_columntolist(self, table:str, column:str):
         # 'PerfumeScraper'
-        rds_df = self.inspect_rds(table)
+        rds_df = self.inspect_rds(table_name=table)
         list = rds_df[column].tolist()
         return list 
 
@@ -431,7 +424,7 @@ class PerfumeScraper:
                 s3_noimg.append(url)
             else:
                 pass
-        print("not on s3: ", len(s3_noimg))
+        print("Not on s3: ", len(s3_noimg))
         return s3_noimg
 
     def url_href_list(self, urls):
@@ -445,61 +438,37 @@ class PerfumeScraper:
             scraped_href_list.append(href)
         return scraped_href_list
 
-    # NEEDS WORK
-    # def adds_local_dict(self, dict_filepath:str, new_data:dict):
-    #     hard = '/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/Sample_Perfume_Dict.json'
-    #     existing_dict = self.open_json(dict_filepath)
-    #     combined = self.add_dict(existing_dict, new_data)
-    #     self.dump_json(filepath, total_dict, 'Sample_Perfume_Dict.json')
+    # INTEGRATING THE ABOVE
 
     def run_scraper(self, no_pages, RDS=True, S3=False, local=False):
         # scrapes the urls of all the products 
-        new_urls = self.get_multiple_links(no_pages) #42 
+        new_urls = self.get_multiple_links(no_pages) # 42 maximum 
         new_hrefs = self.url_href_list(new_urls)
 
         if RDS:
-        # inspects the cloud database and produces a list of hrefs stored
-        # rds_df = self.inspect_rds(table = 'PerfumeScraper') - can delete once checked 
-        # rds_href_list = rds_df['href'].tolist()
-            rds_hrefs = self.rds_columntolist(table='PerfumeScraper', column='href') # check works 
-            rds_tobescraped = self.find_rdsunscraped(new_hrefs, rds_hrefs)
-        # rds_unscraped_url = [] - can delete once works 
-        # rds_unscraped_href = []
-        # for x in scraped_hrefs:
-        #     if x not in rds_href_list:
-        #         url = self.bloom_href(x)
-        #         # stem = 'https://bloomperfume.co.uk/products/' - can delete if works 
-        #         # url = stem + str(x)
-        #         rds_unscraped_url.append(url)
-        #         rds_unscraped_href.append(x)
-
-        # scrape the new list and add to empty dictionary
+            # inspects the cloud database and produces a list of hrefs stored
+            rds_hrefs = self.rds_columntolist(table=self.table, column='href')
+            rds_tobescraped = self.find_rdsunscraped(new_hrefs, rds_hrefs) # list of urls
+            # scrape the new list and add to empty dictionary
             new_dict = self.scrape_add(rds_tobescraped, self.dict)
-        # cleans the dictionary and turns into pd dataframe, appends to rds 
+            # cleans the dictionary and turns into pd dataframe, appends to rds 
             clean_df = self.data_clean(new_dict)
-            self.update_table_rds(data_frame=clean_df, table_name='PerfumeScraper')
+            self.update_table_rds(data_frame=clean_df, table_name=self.table)
 
         if S3:
             no_images_s3_urls = self.check_S3(new_hrefs, self.bucket)
             if len(no_images_s3_urls) > 1:
                 self.downloads_multiple_img(no_images_s3_urls, '/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
-            else:
+                print("Downloading images..")
+                self.uploadDirectory('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
+            elif len(no_images_s3_urls) == 1:
                 filename = str(no_images_s3_urls[0])
                 self.download_image(filename, '/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
-            self.uploadDirectory('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
-
-        # s3_noimg = [] - keep to check if working
-        # for x in scraped_href_list:
-        #     key = str(x) + '.jpg' # name of image 
-        #     result = self.key_exists(mykey=key, mybucket='imagebucketaic')
-        #     if result == False:
-        #         stem = 'https://bloomperfume.co.uk/products/'
-        #         url = stem + str(x)
-        #         s3_noimg.append(url)
-        #     else:
-        #         pass
-        # print("not on s3: ", len(s3_noimg))
-        # print(s3_noimg)
+                print("Downloading image..")
+                self.uploadDirectory('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/')
+            else:
+                pass
+            print("Uploading folder to S3...")
 
         if local:
             # opens local dictionary 
@@ -507,39 +476,24 @@ class PerfumeScraper:
             local_data = 'Sample_dict.json'
             if os.path.exists(data_directory + local_data) == True:
                 stored_dict = self.open_json(data_directory + local_data)
-            # compares new href to stored entrie 
-            href_list = stored_dict['href']
-            dict_url_list = []
-            for href in new_hrefs:
-                if href not in href_list:
-                    url = self.bloom_href(href)
-                    dict_url_list.append(url)
-            updated_dict = self.scrape_add(dict_url_list, stored_dict)
+            # compares new href to stored entry 
+                href_list = stored_dict['href']
+                dict_url_list = []
+                for href in new_hrefs:
+                    if href not in href_list:
+                        url = self.bloom_href(href)
+                        dict_url_list.append(url)
+                updated_dict = self.scrape_add(dict_url_list, stored_dict)
+            else:
+                updated_dict = self.scrape_add(new_urls, self.dict)
             self.dump_json(data_directory, updated_dict, local_data)
+            print("Storing data locally...")
 
-        # no_img = []
-        # for x in rds_unscraped_href:
-        #     full_path = filepath + str(x) + '.jpg'
-        #     if os.path.exists(full_path) == False:
-        #         # print(full_path)
-        #         stem = 'https://bloomperfume.co.uk/products/'
-        #         url = stem + str(x)
-        #         no_img.append(url)
-        #         # self.download_image(url=url, file_name=href, dir_path=filepath)
-        # print("no_img:", len(no_img))
-        
-        # upload existing database (hardcopy)
-        # existing_dict = self.open_json('/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/Sample_Perfume_Dict.json')
-        # self.uploadDirectory(filepath)
-
-        # upload existing database (hardcopy)
-        # existing_dict = self.open_json('/Users/emmasamouelle/Desktop/Scratch/Data_Pipeline/raw_data/Sample_Perfume_Dict.json')
-        # self.dump_json(filepath='/Users/emmasamouelle/Desktop/Scratch/old_pipeline', dict=extra_dict, dict_name='Sample_Perfume_Dict.json')
-        print("----------------------")
-        
+        print("Job complete")
+        print("-------------------")
 
 if __name__ == '__main__':      
-    my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes")
+    my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes", container=False)
     my_scraper.open_webpage("https://bloomperfume.co.uk/collections/perfumes")
     my_scraper.run_scraper(no_pages=1)
     my_scraper.close_webpage()
