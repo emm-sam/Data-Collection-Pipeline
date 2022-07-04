@@ -25,9 +25,12 @@ This project was undertaken as part of the AiCore career accelerator program. Th
 - visualise these metrics on Grafana
 - create a CI/CD pipeline using github workflows, cronjobs, tmux 
 
-### Overview of webscraper 
+### WEBSCRAPER OVERVIEW
+See scraper.py in webscraper_project folder 
 **PerfumeScraper class** contains all the methods needed to run the scraper.
+
 *run_scraper() method* runs the whole scraper using a combination of the other methods.
+
 The 3 arguments to control what data is collected and where it is stored. 
 
 Main tasks overview:
@@ -41,17 +44,23 @@ Main tasks overview:
 - interracting with AWS RDS and S3
 - preventing duplicate scraping
 
+----------------------------------------
+
 **run_scraper (method)**
 
 - Gathers product urls from the main product page and stores in a list (list of urls and unique identifiers)
 
 *Methods* (showing nested structure)
 
-get_multiple_links (loops through given number of product pages) 
-	get_links (scrapes a list of product urls from product pages)
-		open_webpage (opens webpage and clicks on accept cookies button)
-url_href_list (data conversion)
-	url_to_href (data conversion)
+	get_multiple_links (loops through given number of product pages) 
+
+		get_links (scrapes a list of product urls from product pages)
+
+			open_webpage (opens webpage and clicks on accept cookies button)
+
+	url_href_list (data conversion)
+
+		url_to_href (data conversion)
 
 **Arg: RDS**
 
@@ -63,17 +72,28 @@ url_href_list (data conversion)
 - Appends to RDS database 
 
 *Methods:* (showing nested structure)
-rds_columntolist (converts contents of a column on RDS database into a list)
-	inspect_rds (reads whole rds database into a pandas dataframe)
-find_rdsunscraped (compares a list of unique identifiers to those present on RDS)
-scrape_add (scrapes pages from list of urls and adds to given dictionary)
-	scrape_product (scrapes text data from a single product page) 
-		open_webpage (opens webpage and clicks on accept cookies button)
-clean_list (removes null values from a list)
-data_clean (cleans and converts into pandas dataframe)
-	split_rename (data cleaning)
-	create_mapper (renaming columns)
-update_table_rds (
+
+	rds_columntolist (converts contents of a column on RDS database into a list)
+
+		inspect_rds (reads whole rds database into a pandas dataframe)
+
+	find_rdsunscraped (compares a list of unique identifiers to those present on RDS)
+
+	scrape_add (scrapes pages from list of urls and adds to given dictionary)
+
+		scrape_product (scrapes text data from a single product page) 
+
+			open_webpage (opens webpage and clicks on accept cookies button)
+
+	clean_list (removes null values from a list)
+
+	data_clean (cleans and converts into pandas dataframe)
+
+		split_rename (data cleaning)
+
+		create_mapper (renames columns)
+
+	update_table_rds (appends data to existing table on RDS database)
 
 **Arg: S3**
 
@@ -82,17 +102,21 @@ update_table_rds (
 -	Follows url to image link and downloads the images to the same directory 
 -	Uploads whole directory to S3
 
-*Methods:*
-check_S3
-	key_exists
-bloom_href
-download multiple image
-	download_image
-download_image
-upload_directory
+*Methods:* (showing nested structure)
+
+	check_S3 (checks if product image present on S3 bucket using unique identifier)
+
+		key_exists (check if a file exists on S3)
+
+		bloom_href (converts data)
+
+	download_multiple_image (downloads multiple)
+
+		download_image (downloads product image to a local directory from product url)
+
+	upload_directory (uploads a whole directory to S3)
 
  
-
 **Arg: local**
 
 -	Checks if local json file exists
@@ -102,20 +126,42 @@ upload_directory
 -	If no dict exists, creates new dictionary
 -	Stores as a json file with the same name  
 
-*Methods*
-open_json
-dump_json
-bloom_href 
-	href_to_url
-close_webpage
+*Methods* (showing nested structure)
+	open_json (opens json file as dict)
+
+	dump_json (stores dict as json)
+
+	bloom_href (converts data)
+
+		href_to_url (converts data)
+
+	close_webpage (terminates the webpage)
+
+**Python learnings:**
+classes
+methods (object oriented programing)
+for loops
+data conversion 
+secret yaml files
+uuid codes 
+docstrings
+error handling
+using os
+pandas
 
 ------------------------
 
-
+## UNIT TESTING
 
 Task: create unit tests for each public method 
 
-## Create a Docker image which runs the scraper 
+## Creating a Docker image which runs the scraper
+Why?
+- so the package can be used by any operating system and therefore be deployed remotely
+- ease of scaling up  
+
+The following chrome options are needed for the selenium to run in a docker container: 
+>https://stackoverflow.com/questions/45323271/how-to-run-selenium-with-chrome-in-docker
 
 ```
 
@@ -130,9 +176,8 @@ self.driver = webdriver.Chrome(options=chrome_options)
 
 ```
 
+Link to dockerfile: 
 > ### Dockerfile: (https://github.com/emm-sam/Data-Collection-Pipeline/blob/main/Dockerfile)
-
-
 
 Explanation of the dockerfile:
 
