@@ -1,6 +1,6 @@
 # Data-Collection-Pipeline
 
-This project was undertaken as part of the AiCore career accelerator program. The aim of the project was to create an industry-grade data collection pipeline collecting information from a website of our choice. 
+This project was undertaken as part of the AiCore career accelerator program. The aim of the project was to create an industry-grade data collection pipeline collecting information from a website of my choice. 
 
 ### Technologies used: 
 - Python
@@ -14,7 +14,7 @@ This project was undertaken as part of the AiCore career accelerator program. Th
     - Amazon Simple Storage Service (S3) - data lake
 - Docker (open platform for developing, shipping, and running applications)
 - Prometheus (event monitoring and alerting)
-- Grafana (analytics and interactive visualization
+- Grafana (analytics and interactive visualization)
 
 ### Main steps: 
 - build a web scraper (stores text and image data locally and on the cloud)
@@ -25,21 +25,95 @@ This project was undertaken as part of the AiCore career accelerator program. Th
 - visualise these metrics on Grafana
 - create a CI/CD pipeline using github workflows, cronjobs, tmux 
 
+### Overview of webscraper 
+**PerfumeScraper class** contains all the methods needed to run the scraper.
+*run_scraper() method* runs the whole scraper using a combination of the other methods.
+The 3 arguments to control what data is collected and where it is stored. 
 
-Task: create methods to navigate a webpage
-Task: bypass cookies 
-Task: create method to get product page urls 
-Task: retrive text and image data from product page 
-Task: store data in dictionary 
-Task: save dictionary locally 
-Task: create method to find image link and download images locally 
+Main tasks overview:
+- overcome accept cookies button
+- navigate a webpage
+- scraping data from webpage (text and image)
+- data conversion (between lists, dictionaries, json files, dataframes)
+- data cleaning (pandas)
+- downloading files
+- interacting with local files 
+- interracting with AWS RDS and S3
+- preventing duplicate scraping
+
+**run_scraper (method)**
+
+- Gathers product urls from the main product page and stores in a list (list of urls and unique identifiers)
+
+*Methods* (showing nested structure)
+
+get_multiple_links (loops through given number of product pages) 
+	get_links (scrapes a list of product urls from product pages)
+		open_webpage (opens webpage and clicks on accept cookies button)
+url_href_list (data conversion)
+	url_to_href (data conversion)
+
+**Arg: RDS**
+
+- Gathers unique identifier (href) from rds database into a list
+- Compares this list to new the urls (inspects rds, converts to pdDataframe, converts column to list)
+- If not on database, adds urls to a list
+- Scrapes product data from this list and stores in a dictionary
+- Cleans the dictionary and converts to pandas dataframe
+- Appends to RDS database 
+
+*Methods:* (showing nested structure)
+rds_columntolist (converts contents of a column on RDS database into a list)
+	inspect_rds (reads whole rds database into a pandas dataframe)
+find_rdsunscraped (compares a list of unique identifiers to those present on RDS)
+scrape_add (scrapes pages from list of urls and adds to given dictionary)
+	scrape_product (scrapes text data from a single product page) 
+		open_webpage (opens webpage and clicks on accept cookies button)
+clean_list (removes null values from a list)
+data_clean (cleans and converts into pandas dataframe)
+	split_rename (data cleaning)
+	create_mapper (renaming columns)
+update_table_rds (
+
+**Arg: S3**
+
+-   Checks if image name exists on S3 datalake (uses unique identifier as name)
+-   If doesn’t exist, adds urls to a list 
+-	Follows url to image link and downloads the images to the same directory 
+-	Uploads whole directory to S3
+
+*Methods:*
+check_S3
+	key_exists
+bloom_href
+download multiple image
+	download_image
+download_image
+upload_directory
+
+ 
+
+**Arg: local**
+
+-	Checks if local json file exists
+-	If exists, open as dictionary
+-	Checks if unique identifier already in dictionary (list of dictionary values)
+-	If not, then scrapes new urls, adds to the uploaded dictionary
+-	If no dict exists, creates new dictionary
+-	Stores as a json file with the same name  
+
+*Methods*
+open_json
+dump_json
+bloom_href 
+	href_to_url
+close_webpage
+
+------------------------
+
+
+
 Task: create unit tests for each public method 
-Task: upload raw data folder to AWS S3
-Task: upload tabular data to AWS RDS
-Task: prevent rescraping of data (locally)
-Task: prevent duplicate images being collected 
-Task: prevent rescraping from remote database of tabular data 
-create requirements.txt file
 
 ## Create a Docker image which runs the scraper 
 
@@ -60,7 +134,6 @@ self.driver = webdriver.Chrome(options=chrome_options)
 
 
 
-
 Explanation of the dockerfile:
 
 **FROM** - uses a base of python 3.8
@@ -76,12 +149,9 @@ Explanation of the dockerfile:
 **CMD** - runs the scraper package in the webscraper_project folder using python3
 
 
-
-
-## Run the docker container in an EC2 instance 
-
+## Run the docker container on an EC2 instance 
+Steps:
 - create EC2 instance 
-- 'sudo yum update' was prompted 
 - download docker within EC2 instance https://www.cyberciti.biz/faq/how-to-install-docker-on-amazon-linux-2/ using these instructions 
 - $ aws configure 
 
@@ -106,7 +176,7 @@ fixes:
 
 
 ## Set up a prometheus container to monitor your scraper
-
+Steps:
 - create a prometheus.yml file in the root of EC2   **$ sudo nano /root/prometheus.yml** 
 - configure the targets as the EC2 instance public IP4 address: port
 - port 9090 for prometheus, port 9100 for node exporter, port 9323 for docker
@@ -163,7 +233,6 @@ Set up so that a git push on the main branch automatically creates a new docker 
 - The new image needs to be pulled from docker into the workspace 
 
 See workflow: (https://github.com/emm-sam/Data-Collection-Pipeline/blob/main/.github/workflows/main.yml)
-
 
 ## Automate the scraper with cronjobs and multiplexing
 To automate the scraper the interactable element had to be removed (AWS RDS authentication)
