@@ -1,5 +1,4 @@
 from webbrowser import Chrome
-from xmlrpc.client import Boolean
 from selenium import webdriver
 import time
 from time import sleep
@@ -631,5 +630,5 @@ class PerfumeScraper:
         self.close_webpage()
 
 if __name__ == '__main__':      
-    my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes", container=True)
+    my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes", container=False)
     my_scraper.run_scraper(no_pages=1)
