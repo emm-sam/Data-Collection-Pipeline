@@ -2,3 +2,6 @@
 .cache
 creds/
 rds_creds.yaml
+setup.py
+.gitignore
+.dockerignore
