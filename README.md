@@ -1,34 +1,173 @@
 # Data-Collection-Pipeline
 
-Task: create methods to navigate a webpage
+This project was undertaken as part of the AiCore career accelerator program. The aim of the project was to create an industry-grade data collection pipeline collecting information from a website of my choice. 
 
-Task: bypass cookies 
+### Technologies used: 
+- Python
+- Selenium WebDriver 
+- Unittest (unit testing framework)
+- Sqlalchemy and Psycopg2 (Python SQL toolkit and Object Relational Mapper)(Python PostgreSQL database adaptor)
+- Boto3 (Python API for AWS services)
+- Amazon Web Services (AWS)
+    - Amazon Elastic Compute Cloud (EC2) -  virtual server
+    - Amazon Relational Database Service (RDS) - cloud database
+    - Amazon Simple Storage Service (S3) - data lake
+- Docker (open platform for developing, shipping, and running applications)
+- Prometheus (event monitoring and alerting)
+- Grafana (analytics and interactive visualization)
 
-Task: create method to get product page urls 
+### Main steps: 
+- build a web scraper (stores text and image data locally and on the cloud)
+- build a testing suite for scraper 
+- build a docker image to run the scraper remotely 
+- run the docker container on an EC2 instance
+- monitor the EC2 and docker metrics with Prometheus
+- visualise these metrics on Grafana
+- create a CI/CD pipeline using github workflows, cronjobs, tmux 
 
-Task: retrive text and image data from product page 
+### WEBSCRAPER OVERVIEW
+See scraper.py in webscraper_project folder 
+**PerfumeScraper class** contains all the methods needed to run the scraper.
 
-Task: store data in dictionary 
+*run_scraper() method* runs the whole scraper using a combination of the other methods.
 
-Task: save dictionary locally 
+The 3 arguments to control what data is collected and where it is stored. 
 
-Task: create method to find image link and download images locally 
+Main tasks overview:
+- overcome accept cookies button
+- navigate a webpage
+- scraping data from webpage (text and image)
+- data conversion (between lists, dictionaries, json files, dataframes)
+- data cleaning (pandas)
+- downloading files
+- interacting with local files 
+- interracting with AWS RDS and S3
+- preventing duplicate scraping
+
+----------------------------------------
+
+**run_scraper (method)**
+
+- Gathers product urls from the main product page and stores in a list (list of urls and unique identifiers)
+
+*Methods* (showing nested structure)
+
+	get_multiple_links (loops through given number of product pages) 
+
+		get_links (scrapes a list of product urls from product pages)
+
+			open_webpage (opens webpage and clicks on accept cookies button)
+
+	url_href_list (data conversion)
+
+		url_to_href (data conversion)
+
+**Arg: RDS**
+
+- Gathers unique identifier (href) from rds database into a list
+- Compares this list to new the urls (inspects rds, converts to pdDataframe, converts column to list)
+- If not on database, adds urls to a list
+- Scrapes product data from this list and stores in a dictionary
+- Cleans the dictionary and converts to pandas dataframe
+- Appends to RDS database 
+
+*Methods:* (showing nested structure)
+
+	rds_columntolist (converts contents of a column on RDS database into a list)
+
+		inspect_rds (reads whole rds database into a pandas dataframe)
+
+	find_rdsunscraped (compares a list of unique identifiers to those present on RDS)
+
+	scrape_add (scrapes pages from list of urls and adds to given dictionary)
+
+		scrape_product (scrapes text data from a single product page) 
+
+			open_webpage (opens webpage and clicks on accept cookies button)
+
+	clean_list (removes null values from a list)
+
+	data_clean (cleans and converts into pandas dataframe)
+
+		split_rename (data cleaning)
+
+		create_mapper (renames columns)
+
+	update_table_rds (appends data to existing table on RDS database)
+
+**Arg: S3**
+
+-   Checks if image name exists on S3 datalake (uses unique identifier as name)
+-   If doesn’t exist, adds urls to a list 
+-	Follows url to image link and downloads the images to the same directory 
+-	Uploads whole directory to S3
+
+*Methods:* (showing nested structure)
+
+	check_S3 (checks if product image present on S3 bucket using unique identifier)
+
+		key_exists (check if a file exists on S3)
+
+		bloom_href (converts data)
+
+	download_multiple_image (downloads multiple)
+
+		download_image (downloads product image to a local directory from product url)
+
+	upload_directory (uploads a whole directory to S3)
+
+ 
+**Arg: local**
+
+-	Checks if local json file exists
+-	If exists, open as dictionary
+-	Checks if unique identifier already in dictionary (list of dictionary values)
+-	If not, then scrapes new urls, adds to the uploaded dictionary
+-	If no dict exists, creates new dictionary
+-	Stores as a json file with the same name  
+
+*Methods* (showing nested structure)
+	open_json (opens json file as dict)
+
+	dump_json (stores dict as json)
+
+	bloom_href (converts data)
+
+		href_to_url (converts data)
+		
+	scrape_add (scrapes pages from list of urls and adds to given dictionary)
+
+		scrape_product (scrapes text data from a single product page) 
+
+			open_webpage (opens webpage and clicks on accept cookies button)
+			
+	close_webpage (terminates the webpage)
+
+**Python learnings:**
+classes
+methods (object oriented programing)
+for loops
+data conversion 
+secret yaml files
+uuid codes 
+docstrings
+error handling
+using os
+pandas
+
+------------------------
+
+## UNIT TESTING
 
 Task: create unit tests for each public method 
 
-Task: upload raw data folder to AWS S3
+## Creating a Docker image which runs the scraper
+Why?
+- so the package can be used by any operating system and therefore be deployed remotely
+- ease of scaling up  
 
-Task: upload tabular data to AWS RDS
-
-Task: prevent rescraping of data (locally)
-
-Task: prevent duplicate images being collected 
-
-Task: prevent rescraping from remote database of tabular data 
-
-create requirements.txt file
-
-## Create a Docker image which runs the scraper 
+The following chrome options are needed for the selenium to run in a docker container: 
+>https://stackoverflow.com/questions/45323271/how-to-run-selenium-with-chrome-in-docker
 
 ```
 
@@ -43,10 +182,8 @@ self.driver = webdriver.Chrome(options=chrome_options)
 
 ```
 
+Link to dockerfile: 
 > ### Dockerfile: (https://github.com/emm-sam/Data-Collection-Pipeline/blob/main/Dockerfile)
-
-
-
 
 Explanation of the dockerfile:
 
@@ -63,37 +200,35 @@ Explanation of the dockerfile:
 **CMD** - runs the scraper package in the webscraper_project folder using python3
 
 
-
-
-## Run the docker container in an EC2 instance 
-
+## Run the docker container on an EC2 instance 
+Steps:
 - create EC2 instance 
-- 'sudo yum update' was prompted 
 - download docker within EC2 instance https://www.cyberciti.biz/faq/how-to-install-docker-on-amazon-linux-2/ using these instructions 
 - $ aws configure 
+- change the security input option for RDS database from my IP to any IP4
+- 
 
-terminal commands:
-> $ docker login
+	**terminal commands:**
+	> $ docker login
 
-to create the docker image (be inside the directory with DOCKERFILE)
-> $ docker build -t nameimage:tag .
-> $ docker push username/image:tag
+	to create the docker image (be inside the directory with DOCKERFILE)
+	> $ docker build -t nameimage:tag .
+	> $ docker push username/image:tag
 
-once image created and pushed to dockerhub:
-> $ docker pull emmsam/scraper:latest
+	once image created and pushed to dockerhub:
+	> $ docker pull emmsam/scraper:latest
 
-to create/run the container:
+	to create/run the container:
 
-> $ docker run --name containername -dit imagename <
-**-it** runs the file in interactable mode
-**-d** runs in detached mode (for use on EC2)
+	> $ docker run --name containername -dit imagename <
 
-fixes: 
-- needed to change the security input option for RDS database from my IP to any IP4
+	**-it** runs the file in interactable mode
 
+	**-d** runs in detached mode (for use on EC2)
+		
 
 ## Set up a prometheus container to monitor your scraper
-
+Steps:
 - create a prometheus.yml file in the root of EC2   **$ sudo nano /root/prometheus.yml** 
 - configure the targets as the EC2 instance public IP4 address: port
 - port 9090 for prometheus, port 9100 for node exporter, port 9323 for docker
@@ -123,7 +258,6 @@ $ docker run --rm -d -p 9090:9090 --name prometheus -v /root/prometheus.yml:/etc
 > (https://prometheus.io/docs/guides/node-exporter/) 
 
 
-
 ## Observe these metrics and create a Grafana dashboard
 Install grafana, start grafana on local computer. Access localhost:3000 and change password.
 
@@ -151,7 +285,6 @@ Set up so that a git push on the main branch automatically creates a new docker 
 - The new image needs to be pulled from docker into the workspace 
 
 See workflow: (https://github.com/emm-sam/Data-Collection-Pipeline/blob/main/.github/workflows/main.yml)
-
 
 ## Automate the scraper with cronjobs and multiplexing
 To automate the scraper the interactable element had to be removed (AWS RDS authentication)
