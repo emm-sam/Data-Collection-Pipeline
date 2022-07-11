@@ -1,5 +1,5 @@
 import unittest
-from scraper import PerfumeScraper
+from webscraper_project.scraper import PerfumeScraper
 import os.path
 import uuid
 from pandas import DataFrame
