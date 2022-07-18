@@ -1,4 +1,5 @@
 from webbrowser import Chrome
+from numpy import empty
 from selenium import webdriver
 import time
 from time import sleep
@@ -19,7 +20,6 @@ import psycopg2
 from sqlalchemy import inspect
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver import ChromeOptions
-from webdriver_manager.chrome import ChromeDriverManager
 import yaml
 
 class PerfumeScraper: 
@@ -456,6 +456,14 @@ class PerfumeScraper:
         # pd.read_sql_query('''SELECT * FROM actor LIMIT 10''', engine)
         return table_data
 
+    def sql_rds(self, sql_query : str) -> pd.DataFrame:
+        '''
+        Takes in sql query as string
+        Returns pandas dataframe
+        '''
+        result = pd.read_sql(sql=sql_query, con=self.engine)
+        return result
+
     def key_exists(self, mykey, mybucket) -> bool:
         '''
         Inspects S3 bucket to see if a file exists
@@ -522,6 +530,24 @@ class PerfumeScraper:
         list = rds_df[column].tolist()
         return list 
 
+    def rds_check_complete(self) -> str:
+        '''
+        Checks the RDS table for any rows with missing data and returns a list of product urls
+        Args:
+            table: RDS table to search
+        Returns
+            empty_urls: urls that have no corresponding data
+        '''
+        self.engine.connect() 
+        href_df = self.sql_rds(sql_query='''SELECT href, price FROM "PerfumeScraper";''')
+        empty_df = href_df[href_df.price == 'None'] 
+        empty_values = empty_df.href.tolist()
+        empty_urls = []
+        for href in empty_values:
+            url = self.bloom_href(href=href)
+            empty_urls.append(url)
+        return empty_urls
+
     def check_S3(self, href_list:list, s3_bucket:str) -> list:
         '''
         Takes in list of hrefs, checks whether their corresponding images exist in S3 bucket
@@ -575,11 +601,16 @@ class PerfumeScraper:
             '''
             # inspects the cloud database and produces a list of hrefs stored
             rds_hrefs = self.rds_columntolist(table=self.table, column='href')
+            empty_urls = self.rds_check_complete()
             rds_tobescraped = self.find_rdsunscraped(new_hrefs, rds_hrefs)
             # scrape the new list and add to empty dictionary
             new_dict = self.scrape_add(rds_tobescraped, self.dict)
+            combined_dict = self.scrape_add(empty_urls, new_dict)
             # cleans the dictionary and turns into pd dataframe, appends to rds 
-            clean_df = self.data_clean(new_dict)
+            clean_df = self.data_clean(combined_dict)
+            clean_df = clean_df[clean_df.href != 'test']
+            incomplete = clean_df[clean_df.price == 'None']
+            print(f'There are {len(incomplete)} incomplete entries from this scrape')
             self.update_table_rds(data_frame=clean_df, table_name=self.table)
 
         if S3:
@@ -632,3 +663,4 @@ class PerfumeScraper:
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes", container=False)
     my_scraper.run_scraper(no_pages=1)
+
