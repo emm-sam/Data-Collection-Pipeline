@@ -1,25 +1,24 @@
-from webbrowser import Chrome
-from numpy import empty
-from selenium import webdriver
+import boto3
+import botocore
+import json
+import os
+import pandas as pd
+import psycopg2
+import requests
 import time
-from time import sleep
+import urllib.request
+import urllib3.exceptions
+import uuid
+from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.keys import Keys
-import uuid
-import os
-import json
-import urllib.request
-import urllib3.exceptions
-import requests
-import boto3
-import botocore
-from sqlalchemy import create_engine, table
-import pandas as pd
-import psycopg2
-from sqlalchemy import inspect
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver import ChromeOptions
+from sqlalchemy import create_engine, table
+from sqlalchemy import inspect
+from time import sleep
+from webbrowser import Chrome
 import yaml
 
 class PerfumeScraper: 
@@ -35,8 +34,10 @@ class PerfumeScraper:
         Files and images on AWS S3 bucket
         JSON file of product data
     '''
-    def __init__(self, url:str, container=True, creds: str='/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/Data_Collection_Pipeline/creds/rds_creds.yaml'):
+    def __init__(self, url : str, container=True):
         self.url = url
+        self.path = os.getcwd()
+        creds: str= self.path + '/data_collection_pipeline/Data_Collection_Pipeline/creds/rds_creds.yaml'
         self.dict = {"href":['test', 'test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
         self.s3 = boto3.client('s3')
         self.bucket = 'imagebucketaic'
@@ -66,7 +67,8 @@ class PerfumeScraper:
                 creds = yaml.safe_load(f)
             DATABASE_TYPE= creds['DATABASE_TYPE']
             DBAPI= creds['DBAPI']
-            USER= creds['USER']
+            # USER= creds['USER']
+            USER = os.environ.get('USER')
             PASSWORD= creds['PASSWORD']
             ENDPOINT= creds['ENDPOINT']
             PORT= creds['PORT']
@@ -78,7 +80,7 @@ class PerfumeScraper:
 
     # FOR WEBSITE NAVIGATION
 
-    def open_webpage(self, url:str):
+    def open_webpage(self, url : str):
         '''
         Takes in url and opens the webpage
         '''
@@ -108,7 +110,7 @@ class PerfumeScraper:
         '''
         return self.driver.current_url
 
-    def search_website(self, input:str):
+    def search_website(self, input : str):
         '''
         Loads search results from bloom website
         Args: 'input' the word to be searched 
@@ -116,25 +118,24 @@ class PerfumeScraper:
         url = 'https://bloomperfume.co.uk/search?q=' + input
         self.driver.get(url)
 
-    def scroll_down(self, no_seconds:int):
-        '''
-        Scrolls down the current webpage for the number of seconds specified in the args
-        '''
-        start_time = time.time()
-        while (time.time() - start_time) < no_seconds:
-            self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.DOWN)
-        else:
-            pass
-    
-    def scroll_up(self, no_seconds:int):
+    def scroll(self, no_seconds : int, down = True):
         '''
         Scrolls up the current webpage for the number of seconds specified in args
+        Args:
+            no_seconds: number of seconds duration of scroll
+            down: to scroll up or down
         '''
-        start_time2 = time.time()
-        while (time.time() - start_time2) < no_seconds:
-            self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.PAGE_UP)
-        else:
-            pass
+        start_time = time.time()
+        if down:
+            while (time.time() - start_time) < no_seconds:
+                self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.DOWN)
+            else:
+                pass
+        if down == False:
+            while (time.time() - start_time) < no_seconds:
+                self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.PAGE_UP)
+            else:
+                pass
 
     def get_full_height(self) -> str:
         '''
@@ -152,7 +153,7 @@ class PerfumeScraper:
 
     # COLLECTING DATA FROM THE WEBSITE
 
-    def get_links(self, url:str) -> list:
+    def get_links(self, url : str) -> list:
         '''
         Scrapes product urls from webpage
         Args: 'url': full product list webpage
@@ -171,7 +172,7 @@ class PerfumeScraper:
             pass
         return link_list
 
-    def get_multiple_links(self, number_pages:int) -> list:
+    def get_multiple_links(self, number_pages : int) -> list:
         '''
         Scrapes urls from multiple product pages
         Args: number_pages: number of pages to be scraped for urls
@@ -184,7 +185,7 @@ class PerfumeScraper:
             all_links += list_i
         return all_links
 
-    def clean_list(self, list:list) -> list:
+    def clean_list(self, list : list) -> list:
         '''
         Removes null values from a list
         '''
@@ -194,7 +195,7 @@ class PerfumeScraper:
                 cleaned_list.append(l)
         return cleaned_list
 
-    def scrape_product(self, url:str) -> dict:
+    def scrape_product(self, url : str) -> dict:
         '''
         Scrapes the product webpage for required information
         Args: url: product page url to be scraped
@@ -279,7 +280,7 @@ class PerfumeScraper:
             product_dictionary['complete'] = 'False'
         return(product_dictionary)
 
-    def scrape_add(self, url_list:list, original_dict:dict) -> dict:
+    def scrape_add(self, url_list : list, original_dict : dict) -> dict:
         '''
         Takes in a list of product urls to be scraped and an existing dictionary: scrapes and adds to dictionary
         Args:
@@ -305,7 +306,7 @@ class PerfumeScraper:
             original_dict["image link"].append(perfume["image link"])
         return original_dict
 
-    def download_image(self, url:str, file_name:str, dir_path:str):
+    def download_image(self, url : str, file_name : str, dir_path : str):
         '''
         Downloads image from given product url
         Args:
@@ -328,7 +329,7 @@ class PerfumeScraper:
         except NoSuchElementException:
             pass
 
-    def downloads_multiple_img(self, url_list:list, dir_path:str):
+    def downloads_multiple_img(self, url_list : list, dir_path : str):
         '''
         Downloads multiple images to the directory path given
         Args:
@@ -346,7 +347,7 @@ class PerfumeScraper:
 
     # MANIPULATING AND STORING THE DATA 
 
-    def dump_json(self, filepath:str, dict:dict, dict_name:str):
+    def dump_json(self, filepath : str, dict : dict, dict_name : str):
         '''
         Stores ditionary as json file
         Args:
@@ -357,7 +358,7 @@ class PerfumeScraper:
         with open(os.path.join(filepath, dict_name), mode='w') as f:
             json.dump(dict, f)
 
-    def data_clean(self, dictionary:dict) -> pd.DataFrame:
+    def data_clean(self, dictionary : dict) -> pd.DataFrame:
         '''
         Converts dictionary to pandas dataframe and cleans the data
         Args: dictionary: dictionary to be converted
@@ -416,7 +417,7 @@ class PerfumeScraper:
         df3 = pd.concat([df2, subf, subtn, subhn, subbn], axis=1)
         return df3
 
-    def open_json(self, file_path:str) -> dict:
+    def open_json(self, file_path : str) -> dict:
         '''
         Opens json file to dictionary 
         Args: filepath: path to json file to be uploaded
@@ -425,7 +426,7 @@ class PerfumeScraper:
             data = json.load(f)
             return data
 
-    def upload_directory(self, dir_path:str):
+    def upload_directory(self, dir_path : str):
         '''
         Uploads a diretory directly to S3 bucket
         Args: dir_path: path to directory to be uploaded
@@ -435,7 +436,7 @@ class PerfumeScraper:
             for file in files:
                 self.s3.upload_file(os.path.join(root,file),bucket,file)
 
-    def update_database_rds(self, data_frame:pd.DataFrame, table_name:str):
+    def update_database_rds(self, data_frame : pd.DataFrame, table_name : str):
         '''
         Creates/ replaces an RDS table with data stored as a dataframe
         Args:
@@ -444,10 +445,10 @@ class PerfumeScraper:
         '''
         data_frame.to_sql(table_name, self.engine, if_exists='replace')
 
-    def update_table_rds(self, data_frame:pd.DataFrame, table_name:str):
+    def update_table_rds(self, data_frame : pd.DataFrame, table_name : str):
         data_frame.to_sql(table_name, con = self.engine, if_exists = 'append')
 
-    def inspect_rds(self, table_name:str) -> pd.DataFrame:
+    def inspect_rds(self, table_name : str) -> pd.DataFrame:
         '''
         Reads rds database data into a pandas database
         Args: table_name: table to be inspected
@@ -464,7 +465,7 @@ class PerfumeScraper:
         result = pd.read_sql(sql=sql_query, con=self.engine)
         return result
 
-    def key_exists(self, mykey, mybucket) -> bool:
+    def key_exists(self, mykey : str, mybucket : str) -> bool:
         '''
         Inspects S3 bucket to see if a file exists
         Args:
@@ -481,7 +482,7 @@ class PerfumeScraper:
         except:
             return False
 
-    def find_rdsunscraped(self, scraped_href:list, rds_href:list) -> list:
+    def find_rdsunscraped(self, scraped_href : list, rds_href : list) -> list:
         '''
         Takes in a list of scraped hrefs and compares to the hrefs stored on RDS
         Args:
@@ -499,26 +500,26 @@ class PerfumeScraper:
         print('RDS new entries:', len(rds_unscraped_url))
         return rds_unscraped_url
 
-    def url_to_href(self, url:str) -> str:
+    def url_to_href(self, url : str) -> str:
         '''
         Converts bloom product url to href
         '''
         split = url.split("s/")
         return split[1]
 
-    def href_to_url(self, base_url:str, href:str) -> str:
+    def href_to_url(self, base_url : str, href : str) -> str:
         '''
         Adds href to a given url
         '''
         return base_url + href
 
-    def bloom_href(self, href:str) -> str:
+    def bloom_href(self, href : str) -> str:
         '''
         Creates full url from product href
         '''
         return self.href_to_url(base_url='https://bloomperfume.co.uk/products/', href=href)
 
-    def rds_columntolist(self, table:str, column:str) -> list:
+    def rds_columntolist(self, table : str, column : str) -> list:
         '''
         Converts data in a specified RDS table column to a list 
         Args:
@@ -548,7 +549,7 @@ class PerfumeScraper:
             empty_urls.append(url)
         return empty_urls
 
-    def check_S3(self, href_list:list, s3_bucket:str) -> list:
+    def check_S3(self, href_list : list, s3_bucket : str) -> list:
         '''
         Takes in list of hrefs, checks whether their corresponding images exist in S3 bucket
         Args:
@@ -567,7 +568,7 @@ class PerfumeScraper:
         print("Not on s3: ", len(s3_noimg))
         return s3_noimg
 
-    def url_href_list(self, urls:str) -> list:
+    def url_href_list(self, urls : str) -> list:
         '''
         Takes list of urls
         Returns list of hrefs 
@@ -639,7 +640,7 @@ class PerfumeScraper:
             Creates database if it does not exist already. 
             '''
             # opens local dictionary 
-            data_directory = '/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/data/'
+            data_directory = self.path + '/data_collection_pipeline/data/'
             local_data = 'Sample_dict.json'
             if os.path.exists(data_directory + local_data) == True:
                 stored_dict = self.open_json(data_directory + local_data)
@@ -662,5 +663,5 @@ class PerfumeScraper:
 
 if __name__ == '__main__':      
     my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes", container=False)
-    my_scraper.run_scraper(no_pages=1)
+    my_scraper.run_scraper(no_pages=2, RDS=False, local=True)
 
