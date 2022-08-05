@@ -10,17 +10,15 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from webbrowser import Chrome
 
-base_dir = os.getcwd()
-path = base_dir + "/data_collection_pipeline/chromedriver"
-
 class GenericScraper:
     def __init__(self):
-        self.driver = webdriver.Chrome(path)
+        self.driver = webdriver.Chrome()
 
-    def open_webpage(self, url : str):
+    def _open_webpage(self, url : str):
         '''
         Opens webpage
-        Args: url: url to be opened
+        Args: 
+            url: url to be opened
         '''
         self.driver.get(url)
         time.sleep(2)
@@ -30,45 +28,47 @@ class GenericScraper:
         except NoSuchElementException:
             pass
     
-    def close_webpage(self):
+    def _close_webpage(self):
         '''
         Closes current open browser
         '''
         self.driver.quit()
 
-    def get_current_url(self) -> str:
+    def _get_current_url(self) -> str:
         '''
         Returns current url
         '''
         return self.driver.current_url
 
     # TAKE IN WEBELEMENT
-    def get_text(self, element : webdriver) -> str: #5 #USED
+    def _get_text(self, element) -> str: 
         '''
-        Takes in webelement
-        Returns the text 
+        Takes in webelement, returns text
+        Args: 
+            element: webelement
+        Returns: text from that element
         '''
         try:
             var = element.text
         except NoSuchElementException:
-            var = None
+            var = 'None'
         return var
 
-    def get_attr(self, element : webdriver, attr : str) -> str: 
+    def _get_attr(self, element, attr : str) -> str: 
         '''
         Takes in webelement and attributename, returns attribute content
         Args: 
             element: webelement
             attr: name of attribute
-        Returns: content of attribute as a string
+        Returns: content of attribute 
         '''
         try:
-            var = str(element.get_attribute(attr))
+            var = element.get_attribute(attr)
         except NoSuchElementException:
-            var = None
+            var = 'None'
         return var 
 
-    def get_relxpathtext(self, element : webdriver, relxpath : str) -> str:
+    def _get_relxpathtext(self, element, relxpath : str) -> str:
         '''
         Takes in webelement and relative xpath, returns text of that xpath
         Args: 
@@ -79,11 +79,11 @@ class GenericScraper:
         try:
             var = element.find_element(By.XPATH, relxpath).text
         except NoSuchElementException:
-            var = None
+            var = 'None'
         return var
 
     # TAKE IN XPATH
-    def get_xpathtext(self, xpath : str) -> str:
+    def _get_xpathtext(self, xpath : str) -> str:
         '''
         Args: xpath: xpath of text required
         Returns: text from that xpath
@@ -94,7 +94,7 @@ class GenericScraper:
             var = None
         return var
 
-    def get_xpathattr(self, xpath : str, attr : str) -> str:
+    def _get_xpathattr(self, xpath : str, attr : str) -> str:
         '''
         Args: 
             xpath: xpath of required attribute
@@ -105,10 +105,10 @@ class GenericScraper:
             area = self.driver.find_element(By.XPATH, xpath)
             var = area.get_attribute(attr)
         except NoSuchElementException:
-            var = None
+            var = 'None'
         return var
 
-    def get_bin(self, bin_xpath : str, bin_tag : str) -> list:
+    def _get_bin(self, bin_xpath : str, bin_tag : str) -> list:
         '''
         Args:
             bin_xpath: xpath to the container to be looped through
@@ -119,11 +119,11 @@ class GenericScraper:
             bin = self.driver.find_element(By.XPATH, bin_xpath)
             variable_list = bin.find_elements(By.TAG_NAME, bin_tag)
         except NoSuchElementException:
-            variable_list = [None, None]
+            variable_list = ['None', 'None']
         return variable_list 
 
     # COMBINE NAME AND METHOD 
-    def make_tuple(self, name : str, func, arg : str) -> tuple:
+    def _make_tuple(self, name : str, func, arg : str) -> tuple:
         '''
         Tuple that contains the variable and the variable contents from the webpage
         Args:
@@ -136,7 +136,7 @@ class GenericScraper:
         tuple = (name, var)
         return tuple
 
-    def loop_elements(self, list : list, func, arg : str) -> list:
+    def _loop_elements(self, list : list, func, arg : str) -> list:
         '''
         Returns the content from the webelements supplied
         Args:
@@ -154,7 +154,7 @@ class GenericScraper:
             new_list.append(var)
         return new_list
 
-    def tuple_multiple(self, name : str, bin_xpath : str, bin_tag : str, func, arg : str) -> tuple:
+    def _tuple_multiple(self, name : str, bin_xpath : str, bin_tag : str, func, arg : str) -> tuple:
         '''
         Scrapes webpage and creates a variable and content tuple for variables with more than one data point 
         Args:
@@ -165,13 +165,13 @@ class GenericScraper:
             arg: argument for the function above
         Returns: tuple of variable name and list of content scraped from the webapage
         '''
-        bin_tags = self.get_bin(bin_xpath=bin_xpath, bin_tag=bin_tag)
-        new_list = self.loop_elements(bin_tags, func, arg)
+        bin_tags = self._get_bin(bin_xpath=bin_xpath, bin_tag=bin_tag)
+        new_list = self._loop_elements(bin_tags, func, arg)
         tuple = (name, new_list) 
         return tuple
 
     # DATA COLLECTION
-    def scrape_page(self, tup_tup : tuple) -> tuple:
+    def _scrape_page(self, tup_tup : tuple) -> tuple:
         '''
         Takes in a tuple of tuples of length 3 or 5 (must be in the required format)
         Args: tup_tup: format either 
@@ -182,18 +182,24 @@ class GenericScraper:
         new_list = []
         for tup in tup_tup:
             if len(tup) == 3:
-                scraped = self.make_tuple(tup[0], tup[1], tup[2])
-                new_list.append(scraped)
+                try:
+                    scraped = self._make_tuple(tup[0], tup[1], tup[2])
+                    new_list.append(scraped)
+                except:
+                    pass
             elif len(tup) == 5:
-                scraped = self.tuple_multiple(tup[0], tup[1], tup[2], tup[3], tup[4])
-                new_list.append(scraped)
+                try:
+                    scraped = self._tuple_multiple(tup[0], tup[1], tup[2], tup[3], tup[4])
+                    new_list.append(scraped)
+                except:
+                    pass
             else:
                 print('Error, check your input is valid')
         new_tuple = (*new_list,) # converts list to tuple 
         dct = dict((x, y) for x, y in new_tuple) # convert tuples to dict 
         return dct
 
-    def download_image(self, image_link : str, file_name : str, dir_path : str):
+    def _download_image(self, image_link : str, file_name : str, dir_path : str):
         '''
         Downloads a single image to local storage from an image link
         Args:
