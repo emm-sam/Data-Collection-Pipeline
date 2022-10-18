@@ -1,6 +1,9 @@
 # Data-Collection-Pipeline
 
-This project was undertaken as part of the AiCore career accelerator program. The aim of the project was to create an industry-grade data collection pipeline collecting information from a website of my choice. 
+This project was undertaken as part of the AiCore career accelerator program. The aim of the project was to create an industry-grade automated data collection pipeline collecting information from a website of my choice.
+
+
+
 
 ### Technologies used: 
 - Python
@@ -36,7 +39,7 @@ The 3 arguments to control what data is collected and where it is stored.
 Main tasks overview:
 - overcome accept cookies button
 - navigate a webpage
-- scraping data from webpage (text and image)
+- scraping data from a webpage (text and image)
 - data conversion (between lists, dictionaries, json files, dataframes)
 - data cleaning (pandas)
 - downloading files
@@ -46,106 +49,8 @@ Main tasks overview:
 
 ----------------------------------------
 
-**run_scraper (method)**
-
-- Gathers product urls from the main product page and stores in a list (list of urls and unique identifiers)
-
-*Methods* (showing nested structure)
-
-	get_multiple_links (loops through given number of product pages) 
-
-		get_links (scrapes a list of product urls from product pages)
-
-			open_webpage (opens webpage and clicks on accept cookies button)
-
-	url_href_list (data conversion)
-
-		url_to_href (data conversion)
-
-**Arg: RDS**
-
-- Gathers unique identifier (href) from rds database into a list
-- Compares this list to new the urls (inspects rds, converts to pdDataframe, converts column to list)
-- If not on database, adds urls to a list
-- Scrapes product data from this list and stores in a dictionary
-- Cleans the dictionary and converts to pandas dataframe
-- Appends to RDS database 
-
-*Methods:* (showing nested structure)
-
-	rds_columntolist (converts contents of a column on RDS database into a list)
-
-		inspect_rds (reads whole rds database into a pandas dataframe)
-
-	find_rdsunscraped (compares a list of unique identifiers to those present on RDS)
-
-	scrape_add (scrapes pages from list of urls and adds to given dictionary)
-
-		scrape_product (scrapes text data from a single product page) 
-
-			open_webpage (opens webpage and clicks on accept cookies button)
-
-	clean_list (removes null values from a list)
-
-	data_clean (cleans and converts into pandas dataframe)
-
-		split_rename (data cleaning)
-
-		create_mapper (renames columns)
-
-	update_table_rds (appends data to existing table on RDS database)
-
-**Arg: S3**
-
--   Checks if image name exists on S3 datalake (uses unique identifier as name)
--   If doesn’t exist, adds urls to a list 
--	Follows url to image link and downloads the images to the same directory 
--	Uploads whole directory to S3
-
-*Methods:* (showing nested structure)
-
-	check_S3 (checks if product image present on S3 bucket using unique identifier)
-
-		key_exists (check if a file exists on S3)
-
-		bloom_href (converts data)
-
-	download_multiple_image (downloads multiple)
-
-		download_image (downloads product image to a local directory from product url)
-
-	upload_directory (uploads a whole directory to S3)
-
- 
-**Arg: local**
-
--	Checks if local json file exists
--	If exists, open as dictionary
--	Checks if unique identifier already in dictionary (list of dictionary values)
--	If not, then scrapes new urls, adds to the uploaded dictionary
--	If no dict exists, creates new dictionary
--	Stores as a json file with the same name  
-
-*Methods* (showing nested structure)
-	open_json (opens json file as dict)
-
-	dump_json (stores dict as json)
-
-	bloom_href (converts data)
-
-		href_to_url (converts data)
-		
-	scrape_add (scrapes pages from list of urls and adds to given dictionary)
-
-		scrape_product (scrapes text data from a single product page) 
-
-			open_webpage (opens webpage and clicks on accept cookies button)
-			
-	close_webpage (terminates the webpage)
-
 **Python learnings:**
-classes
-methods (object oriented programing)
+classes and methods (object oriented programing)
 for loops
 data conversion 
 secret yaml files
@@ -157,16 +62,12 @@ pandas
 
 ------------------------
 
-## UNIT TESTING
-
-Task: create unit tests for each public method 
-
 ## Creating a Docker image which runs the scraper
 Why?
 - so the package can be used by any operating system and therefore be deployed remotely
 - ease of scaling up  
 
-The following chrome options are needed for the selenium to run in a docker container: 
+The following chrome options are needed for selenium to run in a docker container: 
 >https://stackoverflow.com/questions/45323271/how-to-run-selenium-with-chrome-in-docker
 
 ```
@@ -206,21 +107,20 @@ Steps:
 - download docker within EC2 instance https://www.cyberciti.biz/faq/how-to-install-docker-on-amazon-linux-2/ using these instructions 
 - $ aws configure 
 - change the security input option for RDS database from my IP to any IP4
-- 
 
 	**terminal commands:**
-	> $ docker login
+	> $ docker login 
 
-	to create the docker image (be inside the directory with DOCKERFILE)
-	> $ docker build -t nameimage:tag .
-	> $ docker push username/image:tag
+	to create the docker image (from the directory contaning the DOCKERFILE)
+	> $ docker build -t nameimage:tag . 
+	> $ docker push username/image:tag 
 
 	once image created and pushed to dockerhub:
-	> $ docker pull emmsam/scraper:latest
+	> $ docker pull emmsam/scraper:latest 
 
 	to create/run the container:
 
-	> $ docker run --name containername -dit imagename <
+	> $ docker run --name containername -dit imagename 
 
 	**-it** runs the file in interactable mode
 
@@ -288,7 +188,7 @@ See workflow: (https://github.com/emm-sam/Data-Collection-Pipeline/blob/main/.gi
 
 ## Automate the scraper with cronjobs and multiplexing
 To automate the scraper the interactable element had to be removed (AWS RDS authentication)
-#### - Options:
+#### Options:
     - pass a yaml or json file to the docker container when run using **-v** flag 
     - Set environment variables to pass to the docker container: 
         - Create a docker-compose.yml file and use **$ docker-compose up**
@@ -298,31 +198,24 @@ To automate the scraper the interactable element had to be removed (AWS RDS auth
 > - (https://rotempinchevskiboguslavsky.medium.com/environment-variables-in-container-vs-docker-compose-file-2426b2ec7d8b)
 > - (https://docs.docker.com/compose/environment-variables/)
 
-#### - To access the environment variables within the scraper:
-
-```
-import os
-DATABASE_TYPE=os.environ.get('DATABASE_TYPE')
-```
-#### - To run the docker container
+#### To run the docker container
 ```
  $ docker run --name new_scraper --env-file /home/ec2-user/.env emmsam/scraper:latest
 ```
-#### - Extra steps:
+#### Extra steps:
 - **EXPOSE 5432** (in dockerfile - port)
 - ensure RDS database security input allows access from EC2
 
-#### - Edit cronjobs on EC2 instance with **$ crontab -e**
+#### Edit cronjobs on EC2 instance with **$ crontab -e**
 <img width="680" alt="Screenshot 2022-06-29 at 17 41 23" src="https://user-images.githubusercontent.com/100299675/176490853-faf1559c-2c86-4fa9-a18f-4c396e7f2c1a.png">
  
  - 0 0 * * * means every night at midnight
  - pulls latest image, runs container, stops container, removes container 
 
-#### - Using tmux as a multiplexor
+#### Using tmux as a multiplexor
 The EC2 instance will continue to run to allow the scraper to restart automatically 
 > $ tmux 
 - ensure logged in to docker on EC2
 - manually exit the terminal, the EC2 instance will continue
 - to reconnect use $tmux a
 <img width="1020" alt="Screenshot 2022-06-29 at 17 45 23" src="https://user-images.githubusercontent.com/100299675/176491436-80791d28-1e07-4c85-9fef-929e686a4616.png">
-
