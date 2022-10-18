@@ -57,6 +57,8 @@ docstrings
 error handling
 using os
 pandas
+docstrings
+inheritance
 
 ------------------------
 
