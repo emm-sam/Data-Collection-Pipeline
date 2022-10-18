@@ -2,14 +2,14 @@
 
 This project was undertaken as part of the AiCore career accelerator program. The aim of the project was to create an industry-grade automated data collection pipeline collecting information from a website of my choice.
 
-
-
+This project really developed my understanding of object oriented programming and principles of software design. There were many challenging aspects, especially using docker, but the results were very satisfying. I also created a second scraper in the webscraper_2 folder, to experiment with different ways of structuring the webscraping and data manipulation, in order to make the scraper more generic to use on other websites. I also wanted to try out inheritence in OOP. There are strengths and weaknesses to both, but I learnt a lot from the process. 
 
 ### Technologies used: 
 - Python
 - Selenium WebDriver 
 - Unittest (unit testing framework)
-- Sqlalchemy and Psycopg2 (Python SQL toolkit and Object Relational Mapper)(Python PostgreSQL database adaptor)
+- Sqlalchemy (Python SQL toolkit and Object Relational Mapper)
+- Psycopg2 (Python PostgreSQL database adaptor)
 - Boto3 (Python API for AWS services)
 - Amazon Web Services (AWS)
     - Amazon Elastic Compute Cloud (EC2) -  virtual server
@@ -32,9 +32,7 @@ This project was undertaken as part of the AiCore career accelerator program. Th
 See scraper.py in webscraper_project folder 
 **PerfumeScraper class** contains all the methods needed to run the scraper.
 
-*run_scraper() method* runs the whole scraper using a combination of the other methods.
-
-The 3 arguments to control what data is collected and where it is stored. 
+There are 3 arguments to control how much data is collected and where it is stored (cloud database, cloud datalake, local directory). 
 
 Main tasks overview:
 - overcome accept cookies button
@@ -126,6 +124,7 @@ Steps:
 
 	**-d** runs in detached mode (for use on EC2)
 		
+- I set up the container to interact with the cloud data lake and database, however data files can also be transferred from a docker container to localhost if needed 
 
 ## Set up a prometheus container to monitor your scraper
 Steps:
