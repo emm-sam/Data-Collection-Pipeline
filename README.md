@@ -112,7 +112,8 @@ Steps:
 	> $ docker login 
 
 	to create the docker image (from the directory contaning the DOCKERFILE)
-	> $ docker build -t nameimage:tag . 
+	> $ docker build -t nameimage:tag .
+	 
 	> $ docker push username/image:tag 
 
 	once image created and pushed to dockerhub:
