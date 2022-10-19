@@ -8,11 +8,14 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
 from webbrowser import Chrome
+from webdriver_manager.chrome import ChromeDriverManager
 
 class GenericScraper:
     def __init__(self):
-        self.driver = webdriver.Chrome()
+        # self.driver = webdriver.Chrome()
+        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 
     def _open_webpage(self, url : str):
         '''
@@ -28,7 +31,7 @@ class GenericScraper:
         except NoSuchElementException:
             pass
     
-    def _close_webpage(self):
+    def close_webpage(self):
         '''
         Closes current open browser
         '''

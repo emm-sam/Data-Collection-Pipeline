@@ -21,6 +21,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         self.s3 = boto3.client('s3')
         self.bucket = bucket
         self.table = table
+        self.emptydict = {'name': 'test', 'price': 'test', 'concentration': 'test', 'brand': 'test', 'description': ['', ''], 'related_perfumes': ['','','','','','']}
         self.format = (
                 ('name', self._get_xpathtext, '//*[@id="product-page"]/div/div[1]/div/div[1]/h1'),
                 ('price', self._get_xpathtext, '//*[@id="product-page"]/div/div[3]/div/div[1]/div[2]/span[1]'),
@@ -31,14 +32,14 @@ class PerfumeScraper(GenericScraper, DataManipulation):
                 ('description', '//*[@id="product-page"]/div/div[3]/div/div[7]', 'p', self._get_text, 'no_arg'),
                 # ('style', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[5]', 'span', self._get_attr, 'data-search'),
                 # ('flavours', '//*[@id="product-page"]/div/div[1]/div/div[2]', 'div', self._get_attr, 'data-search'),
-                ('top_notes', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[1]', 'span', self._get_attr, 'data-search'),
-                ('heart_notes', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[2]', 'span', self._get_attr, 'data-search'),
-                ('base_notes', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[3]', 'span', self._get_attr, 'data-search'),
+                # ('top_notes', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[1]', 'span', self._get_attr, 'data-search'),
+                # ('heart_notes', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[2]', 'span', self._get_attr, 'data-search'),
+                # ('base_notes', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[3]', 'span', self._get_attr, 'data-search'),
                 # ('tags', '//*[@id="product-page"]/div/div[3]/div/div[6]/div[4]', 'span', self._get_attr, 'data-search'),
                 ('related_perfumes', '//*[@id="product-similar"]/div/div', 'div', self._get_relxpathtext, './figure/figcaption/span[1]')
                 )
 
-    def __uploadDirectory(self, dir_path : str):
+    def __upload_directory(self, dir_path : str):
         '''
         Uploads directory contents directly to S3 bucket
         Args: 
@@ -251,11 +252,10 @@ class PerfumeScraper(GenericScraper, DataManipulation):
             result['href'] = self.__url_to_href(url)
             result['url'] = url
             dict_list.append(result)
-            # result['image_link'] = self.get_xpathattr('/html/body/div[4]/main/div[2]/div/div[2]/div/div[2]/div/div/img', 'src')
         return dict_list
 
     def __connect_database(self):
-        creds = self.path + '/data_collection_pipeline/Data_Collection_Pipeline/creds/rds_creds.yaml'
+        creds = self.path + '/creds/rds_creds.yaml'
         with open(creds, 'r') as f:
             creds = yaml.safe_load(f)
         DATABASE_TYPE= creds['DATABASE_TYPE']
@@ -304,50 +304,33 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         '''
         new_urls = self.__multiple_urls(no_pages)
         new_hrefs = self.__url_href_list(new_urls)
-        data_directory = self.path + '/data_collection_pipeline/data/'
-        local_data = data_directory + 'Sample_dict_v2.json'
+        data_directory = self.path + '/data/'
+        local_data = data_directory + 'sample_v2.json'
         if os.path.exists(local_data) == True:
             stored_dict = self._open_json(local_data)
-            href_list = stored_dict['href']
-            url_notindict = []
-            for href in new_hrefs:
-                if href not in href_list:
-                    url = self.__bloom_href(href)
-                    url_notindict.append(url)
-            new_data_list = self.__loop_scrape(url_notindict)
-            updated = [local_data, new_data_list]
-            new_dict = self._list_to_dict(updated)
-
+            if len(stored_dict) != 0:
+                href_list = stored_dict['href']
+                url_notindict = []
+                for href in new_hrefs:
+                    if href not in href_list:
+                        url = self.__bloom_href(href)
+                        url_notindict.append(url)
+                if len(url_notindict) != 0:
+                    new_data_list = self.__loop_scrape(url_notindict)
+                    new_data_dict = self._list_to_dict(new_data_list)
+                    make_list = [stored_dict, new_data_dict]
+                    new_dict = self._list_to_dict(make_list)
+                else:
+                    print("There are no new results")
+                    new_dict = stored_dict
+            else:
+                old_dict = self.emptydict
+                result = self.__loop_scrape(new_urls)
+                print('There are ' + str(len(result)) + ' new results')
+                new_dict = self._list_to_dict(result)
         else:
-            print(new_urls)
-            # new_url = [new_urls[0], new_urls[1]]
             result = self.__loop_scrape(new_urls)
-            print(len(result))
+            print('There are ' + str(len(result)) + ' new results')
             new_dict = self._list_to_dict(result)
-            self._close_webpage()
-        # self._dump_json(local_data, new_dict, 'Sample_dict_v2.json')
-        # print("Storing data locally...")
-
-
-example_list = ['https://bloomperfume.co.uk/products/canvas', 'https://bloomperfume.co.uk/products/figuier-noir', 'https://bloomperfume.co.uk/products/pg20-1-sorong']
-example_listfdicts= [{'name': 'Canvas', 'price': '£110.00', 'concentration': '£110.00, 50 ml EdP', 'brand': 'Der Duft', 'description': ['', '']}, {'name': 'Figuier Noir', 'price': '£135.00', 'concentration': '£135.00, 100 ml EdP', 'brand': 'Houbigant', 'description': ['', '', '', '']}, {'name': 'PG20.1 Sorong', 'price': '£138.00', 'concentration': '£138.00, 100 ml EdP', 'brand': 'Pierre Guillaume - Parfumerie Générale', 'description': ['']}]
-
-if __name__ == '__main__':
-    myscraper = PerfumeScraper(bucket='imagebucketaic', table='PerfumeScraper')
-    result = myscraper.run_scraper_local(no_pages=1)
-    # example_dict = samplelist[0]
-    # mydata = DataManipulation()
-    # myscraper.inspect_rds(engine=myscraper.engine) 
-    # result = myscraper.loop_scrape(example_list) # list containing dictionary
-    # myscraper.dump_json('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline/Data_Collection_Pipeline/webscraper_project', result[0], 'example.json')
-    # print(myscraper.get_urls('https://bloomperfume.co.uk/collections/perfumes'))
-    # pando = myscraper.inspect_rds('PerfumeScraper')
-    # print(pando.head())
-
-    # url_list = myscraper.multiple_urls(no_pages=2) - tested 20/6
-    # list_dict = myscraper.loop_scrape(url_list=url_list) tested 20/6
-    # first_40 = myscraper.list_to_dict(list_dict) tested 20/6
-    # myscraper.dump_json('/Users/emmasamouelle/Desktop/Scratch/data_collection_pipeline', first_40, 'FIRST_40.json') tested 20/6
-
-
-    
+        self._dump_json(data_directory, new_dict, 'sample_v2.json')
+        print("Storing data locally...")
