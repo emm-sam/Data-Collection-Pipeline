@@ -133,4 +133,11 @@ creds/
 setup.py
 .gitignore
 .dockerignore
-
+extras.ipynb
+unusedcode.py
+data_format.py
+All_RDS.json
+perfume_directory.json
+sample_v2.json
+INSTRUCTIONS.md
+chromedriver

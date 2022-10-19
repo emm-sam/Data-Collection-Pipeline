@@ -37,7 +37,7 @@ class PerfumeScraper:
         Files and images on AWS S3 bucket
         JSON file of product data
     '''
-    def __init__(self, url : str, container=True):
+    def __init__(self, url : str, container = True):
         self.url = url
         self.path = os.getcwd()
         creds: str= self.path + '/creds/rds_creds.yaml'

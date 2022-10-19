@@ -5,3 +5,11 @@ rds_creds.yaml
 setup.py
 .gitignore
 .dockerignore
+extras.ipynb
+unusedcode.py
+data_format.py
+data/
+extras/
+webscraper_2/
+README.md
+chromedriver
