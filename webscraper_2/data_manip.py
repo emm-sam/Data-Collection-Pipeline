@@ -13,11 +13,11 @@ class DataManipulation:
         Args: file path
         Returns: dictionary
         '''
-        with open(file_path, mode='r') as f:
+        with open(file_path, mode = 'r') as f:
             data = json.load(f)
             return data
 
-    def _dump_json(self, file_path, dict, dict_name):
+    def _dump_json(self, file_path, dict, dict_name) -> None:
         '''
         Stores dictionary as json file
         Args: 
@@ -25,7 +25,7 @@ class DataManipulation:
             dict: dictionary to be stored
             dict_name: name of dict, suffix with ".json"
         '''
-        with open(os.path.join(file_path, dict_name), mode='w') as f:
+        with open(os.path.join(file_path, dict_name), mode = 'w') as f:
             json.dump(dict, f)
 
     def _list_to_dict(self, listofdicts:list) -> dict:

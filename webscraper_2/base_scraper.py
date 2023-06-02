@@ -2,8 +2,8 @@ import os
 import requests
 import time
 import urllib.request
-from sqlalchemy import func
 import urllib3.exceptions
+from sqlalchemy import func
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
@@ -17,7 +17,7 @@ class GenericScraper:
         # self.driver = webdriver.Chrome()
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 
-    def _open_webpage(self, url : str):
+    def _open_webpage(self, url : str) -> None:
         '''
         Opens webpage
         Args: 
@@ -26,12 +26,12 @@ class GenericScraper:
         self.driver.get(url)
         time.sleep(2)
         try:
-            cookies_button = self.driver.find_element(By.CLASS_NAME, "accept")
+            cookies_button = self.driver.find_element(By.CLASS_NAME, 'accept')
             cookies_button.click()
         except NoSuchElementException:
             pass
     
-    def close_webpage(self):
+    def close_webpage(self) -> None:
         '''
         Closes current open browser
         '''
@@ -168,7 +168,7 @@ class GenericScraper:
             arg: argument for the function above
         Returns: tuple of variable name and list of content scraped from the webapage
         '''
-        bin_tags = self._get_bin(bin_xpath=bin_xpath, bin_tag=bin_tag)
+        bin_tags = self._get_bin(bin_xpath = bin_xpath, bin_tag = bin_tag)
         new_list = self._loop_elements(bin_tags, func, arg)
         tuple = (name, new_list) 
         return tuple
@@ -202,7 +202,7 @@ class GenericScraper:
         dct = dict((x, y) for x, y in new_tuple) # convert tuples to dict 
         return dct
 
-    def _download_image(self, image_link : str, file_name : str, dir_path : str):
+    def _download_image(self, image_link : str, file_name : str, dir_path : str) -> None:
         '''
         Downloads a single image to local storage from an image link
         Args:

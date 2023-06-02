@@ -16,7 +16,7 @@ from webscraper_2.data_manip import DataManipulation
 class PerfumeScraper(GenericScraper, DataManipulation):
     def __init__(self, bucket : str, table : str):
         super().__init__()
-        self.url='https://bloomperfume.co.uk/collections/perfumes'
+        self.url = 'https://bloomperfume.co.uk/collections/perfumes'
         self.path = os.getcwd()
         self.s3 = boto3.client('s3')
         self.bucket = bucket
@@ -39,7 +39,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
                 ('related_perfumes', '//*[@id="product-similar"]/div/div', 'div', self._get_relxpathtext, './figure/figcaption/span[1]')
                 )
 
-    def __upload_directory(self, dir_path : str):
+    def __upload_directory(self, dir_path : str) -> None:
         '''
         Uploads directory contents directly to S3 bucket
         Args: 
@@ -51,7 +51,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
             for file in files:
                 self.s3.upload_file(os.path.join(root,file),bucket,file)
 
-    def __update_databse_rds(self, data_frame : pd.DataFrame, table_name : str):
+    def __update_databse_rds(self, data_frame : pd.DataFrame, table_name : str) -> None:
         '''
         Uploads dataframe to AWS RDS, replaces table if exists
         Args:
@@ -59,10 +59,10 @@ class PerfumeScraper(GenericScraper, DataManipulation):
             table_name: RDS table name 
         '''
         engine = self.__connect_database()
-        data_frame.to_sql(table_name, engine, if_exists='replace')
+        data_frame.to_sql(table_name, engine, if_exists = 'replace')
         print('Uploading perfumes to RDS database...')
         
-    def __update_table_rds(self, data_frame : pd.DataFrame, table_name : str):
+    def __update_table_rds(self, data_frame : pd.DataFrame, table_name : str) -> None:
         '''
         Uploads dataframe to AWS RDS, appends to table if exists
         Args:
@@ -92,7 +92,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
             column: name of column to be inspected
         Returns: a list containing all column data
         '''
-        rds_df = self.__inspect_rds(table_name=table)
+        rds_df = self.__inspect_rds(table_name = table)
         list = rds_df[column].tolist()
         return list 
 
@@ -131,7 +131,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         print('RDS new entries:', len(rds_unscraped_url))
         return rds_unscraped_url
 
-    def __key_exists(self, mykey : str, mybucket : str):
+    def __key_exists(self, mykey : str, mybucket : str) -> None:
         '''
         Checks whether an object exists in a specified S3 bucket
         Args: 
@@ -140,7 +140,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         Returns: boolean value whether the file exists or not
         '''
         try:
-            response = self.s3.list_objects_v2(Bucket=mybucket, Prefix=mykey)
+            response = self.s3.list_objects_v2(Bucket = mybucket, Prefix = mykey)
             if response:
                 for obj in response['Contents']:
                     if mykey == obj['Key']:
@@ -164,7 +164,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
                 s3_noimg.append(url)
             else:
                 pass
-        print("Not on s3: ", len(s3_noimg))
+        print('Not on s3: ', len(s3_noimg))
         return s3_noimg
 
     def __sql_rds(self, sql_query : str) -> pd.DataFrame:
@@ -188,7 +188,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         '''
         Converts full url to product href (unique identifier)
         '''
-        split = url.split("s/")
+        split = url.split('s/')
         return split[1]
 
     def __url_href_list(self, urls : str) -> list:
@@ -206,7 +206,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         '''
         Creates full url from product href
         '''
-        return self.__href_to_url(base_url='https://bloomperfume.co.uk/products/', href=href)
+        return self.__href_to_url(base_url = 'https://bloomperfume.co.uk/products/', href = href)
 
     def __get_urls(self, main_url : str) -> list:
         '''
@@ -217,7 +217,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         self._open_webpage(main_url)
         try:
             container = self.driver.find_element(By.XPATH, '//div[@class="products-list"]')
-            prod_list = container.find_elements(By.CLASS_NAME, "product-name")
+            prod_list = container.find_elements(By.CLASS_NAME, 'product-name')
             url_list = self._loop_elements(prod_list, self._get_attr, 'href')
         except NoSuchElementException:
             url_list = ['None', 'None']
@@ -233,7 +233,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         '''
         all_links = []
         for i in range(1, (no_pages+1), 1):
-            paged_url = self.url + "?page=" + str(i)
+            paged_url = self.url + '?page=' + str(i)
             list_i = self.__get_urls(paged_url)
             all_links += list_i
         return all_links
@@ -265,11 +265,11 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         ENDPOINT= creds['ENDPOINT']
         PORT= creds['PORT']
         DATABASE= creds['DATABASE']
-        engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
+        engine = create_engine(f'{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}')
         engine.connect()
         return engine
 
-    def run_scraper_RDS(self, no_pages : int):
+    def run_scraper_RDS(self, no_pages : int) -> None:
         '''
         This method scrapes the number of pages supplied for new products, compares against data stored on RDS and also checks for incomplete entries on RDS.
         The data is then scraped and RDS table updated
@@ -282,7 +282,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         new_urls = self.__multiple_urls(no_pages)
         new_hrefs = self.__url_href_list(new_urls)
         # inspects the cloud database and produces a list of hrefs stored
-        rds_hrefs = self.__rds_columntolist(table=self.table, column='href')
+        rds_hrefs = self.__rds_columntolist(table = self.table, column = 'href')
         url_list = self.__find_rdsunscraped(new_hrefs, rds_hrefs)
         # checks rds for incomplete entries
         url_list_2 = self.__rds_check_complete()
@@ -292,7 +292,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
         new_df = self._dict_to_pd(new_dict)
         self.__update_table_rds(new_df, self.table)
 
-    def run_scraper_local(self, no_pages : int): 
+    def run_scraper_local(self, no_pages : int) -> None: 
         '''
         Compares product data stored locally to newly scraped urls. 
         Only scrapes from products not present in the local json file. 
@@ -321,7 +321,7 @@ class PerfumeScraper(GenericScraper, DataManipulation):
                     make_list = [stored_dict, new_data_dict]
                     new_dict = self._list_to_dict(make_list)
                 else:
-                    print("There are no new results")
+                    print('There are no new results')
                     new_dict = stored_dict
             else:
                 old_dict = self.emptydict
@@ -333,4 +333,4 @@ class PerfumeScraper(GenericScraper, DataManipulation):
             print('There are ' + str(len(result)) + ' new results')
             new_dict = self._list_to_dict(result)
         self._dump_json(data_directory, new_dict, 'sample_v2.json')
-        print("Storing data locally...")
+        print('Storing data locally...')

@@ -28,10 +28,10 @@ class PerfumeScraper:
     '''
     This scraper class scrapes perfume product data from the website bloomperfume.co.uk.
     It can upload product data to AWS RDS database, upload raw data (images and files) to an S3 datalake and create a local json file of product data.
-    It can be used on a local machine (Mac) or used remotely
+    It can be used on a local machine (Mac) or used remotely.
     Args:
         url: base product page with all products to be scraped
-        container: toggles whether being used on local computer or remotely on a docker container (default on)
+        container: toggles whether being used on local computer or remotely on a docker container (default container)
     Outputs:
         Table on RDS database
         Files and images on AWS S3 bucket
@@ -41,7 +41,7 @@ class PerfumeScraper:
         self.url = url
         self.path = os.getcwd()
         creds: str= self.path + '/creds/rds_creds.yaml'
-        self.dict = {"href":['test', 'test'], "url":['test','test'], "complete":['test', 'test'], "uuid":['test', 'test'], "name":['test', 'test'], "id":['123', '123'], "price":['£135', '£135'], "strength":['75ml / EdP', '75ml / EdP'], "category":['test', 'test'], "brand":['test', 'test'], "flavours":[['test', 'test'],['test', 'test']], "top notes":[['test', 'test'],['test', 'test']], "heart notes":[['test', 'test'],['test', 'test']], "base notes":[['test', 'test'],['test', 'test']], "image link":['test', 'test']}
+        self.dict = {'href':['test', 'test'], 'url':['test','test'], 'complete':['test', 'test'], 'uuid':['test', 'test'], 'name':['test', 'test'], 'id':['123', '123'], 'price':['£135', '£135'], 'strength':['75ml / EdP', '75ml / EdP'], 'category':['test', 'test'], 'brand':['test', 'test'], 'flavours':[['test', 'test'],['test', 'test']], 'top notes':[['test', 'test'],['test', 'test']], 'heart notes':[['test', 'test'],['test', 'test']], 'base notes':[['test', 'test'],['test', 'test']], 'image link':['test', 'test']}
         self.s3 = boto3.client('s3')
         self.bucket = 'aicpinterest/images'
         self.table = 'PerfumeScraper'
@@ -76,30 +76,30 @@ class PerfumeScraper:
             PORT= creds['PORT']
             DATABASE= creds['DATABASE']
 
-        self.engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
+        self.engine = create_engine(f'{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}')
         self.engine.connect() 
 
     # FOR WEBSITE NAVIGATION
 
-    def open_webpage(self, url : str):
+    def open_webpage(self, url : str) -> None:
         '''
         Takes in url and opens the webpage
         '''
         self.driver.get(url)
         time.sleep(2)
         try:
-            cookies_button = self.driver.find_element(By.CLASS_NAME, "accept")
+            cookies_button = self.driver.find_element(By.CLASS_NAME, 'accept')
             cookies_button.click()
         except NoSuchElementException:
             pass
 
-    def close_webpage(self):
+    def close_webpage(self) -> None:
         '''
         Closes browser
         '''
         self.driver.quit()
 
-    def go_back(self):
+    def go_back(self) -> None:
         '''
         Goes back to previous loaded page
         '''
@@ -111,7 +111,7 @@ class PerfumeScraper:
         '''
         return self.driver.current_url
 
-    def search_website(self, input : str):
+    def search_website(self, input : str) -> None:
         '''
         Loads search results from bloom website
         Args: 'input' the word to be searched 
@@ -129,12 +129,12 @@ class PerfumeScraper:
         start_time = time.time()
         if down:
             while (time.time() - start_time) < no_seconds:
-                self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.DOWN)
+                self.driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.DOWN)
             else:
                 pass
         if down == False:
             while (time.time() - start_time) < no_seconds:
-                self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.PAGE_UP)
+                self.driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_UP)
             else:
                 pass
 
@@ -142,14 +142,14 @@ class PerfumeScraper:
         '''
         Finds the total height of the webpage
         '''
-        total_height = str(self.driver.execute_script("return document.body.scrollHeight"))
+        total_height = str(self.driver.execute_script('return document.body.scrollHeight'))
         return total_height
         
     def get_scroll_height(self) -> str:
         '''
         Finds the current scroll height of the webpage
         '''
-        current_height = self.driver.execute_script("return window.pageYOffset + window.innerHeight")
+        current_height = self.driver.execute_script('return window.pageYOffset + window.innerHeight')
         return current_height
 
     # COLLECTING DATA FROM THE WEBSITE
@@ -158,16 +158,16 @@ class PerfumeScraper:
         '''
         Scrapes product urls from webpage
         Args: 'url': full product list webpage
-        Returns: list of urls scraped from the webpage
+        Returns: list of url strings scraped from the webpage
         '''
         self.open_webpage(url)
         time.sleep(1)
         try:
             product_container = self.driver.find_element(By.XPATH, '//div[@class="products-list"]')
-            prod_list = product_container.find_elements(By.CLASS_NAME, "product-name")
+            prod_list = product_container.find_elements(By.CLASS_NAME, 'product-name')
             link_list = [] 
             for p in prod_list:
-                href = p.get_attribute("href")
+                href = p.get_attribute('href')
                 link_list.append(href)
         except:
             pass
@@ -180,8 +180,8 @@ class PerfumeScraper:
         Returns: a list of product urls 
         '''
         all_links = []
-        for i in range(start_page, (number_pages+1), 1):
-            paged_url = self.url + "?page=" + str(i)
+        for i in range(start_page, (number_pages + 1), 1):
+            paged_url = self.url + '?page=' + str(i)
             list_i = self.get_links(paged_url)
             all_links += list_i
         return all_links
@@ -200,63 +200,63 @@ class PerfumeScraper:
         '''
         Scrapes the product webpage for required information
         Args: url: product page url to be scraped
-        Returns: a product dictionary with the variable name as key and result as the value
+        Returns: a product dictionary with the variable names as keys and results as the values
         '''
         self.open_webpage(url)
-        product_dictionary = {"href":[], "url":[], "complete":[], "uuid":[], "name":[], "id":[], "price":[], "strength":[], "category":[], "brand":[], "flavours":[], "top notes":[], "heart notes":[], "base notes":[], "image link":[]}
+        product_dictionary = {'href':[], 'url':[], 'complete':[], 'uuid':[], 'name':[], 'id':[], 'price':[], 'strength':[], 'category':[], 'brand':[], 'flavours':[], 'top notes':[], 'heart notes':[], 'base notes':[], 'image link':[]}
         current_url = self.driver.current_url
-        split = current_url.split("s/")
+        split = current_url.split('s/')
         product_dictionary['href'] = split[1]
         product_dictionary['url'] = current_url
-        product_dictionary['complete']='True'
-        product_dictionary['uuid']=str(uuid.uuid4())
+        product_dictionary['complete'] = 'True'
+        product_dictionary['uuid'] = str(uuid.uuid4())
 
         try:
             main_details = self.driver.find_element(By.XPATH, '//*[@id="product-page"]/div/div[3]/div/div[1]/div[1]/div[1]/a')
-            product_number = main_details.get_attribute("data-product") 
-            product_dictionary['id']=product_number
-            product_price = main_details.get_attribute("data-price")
-            product_dictionary['price']=product_price
-            product_title = main_details.get_attribute("data-title")
-            product_dictionary['name']=product_title
-            product_vtitle = main_details.get_attribute("data-vtitle")
-            product_dictionary['strength']=product_vtitle
-            product_category = main_details.get_attribute("data-cat")
-            product_dictionary['category']=product_category
-            product_brand = main_details.get_attribute("data-vendor")
+            product_number = main_details.get_attribute('data-product') 
+            product_dictionary['id'] = product_number
+            product_price = main_details.get_attribute('data-price')
+            product_dictionary['price'] = product_price
+            product_title = main_details.get_attribute('data-title')
+            product_dictionary['name'] = product_title
+            product_vtitle = main_details.get_attribute('data-vtitle')
+            product_dictionary['strength'] = product_vtitle
+            product_category = main_details.get_attribute('data-cat')
+            product_dictionary['category'] = product_category
+            product_brand = main_details.get_attribute('data-vendor')
             product_dictionary['brand'] = product_brand
 
             flavours = self.driver.find_element(By.XPATH, '//*[@id="product-page"]/div/div[1]/div/div[2]')
-            flavs = flavours.find_elements(By.TAG_NAME, "div")
+            flavs = flavours.find_elements(By.TAG_NAME, 'div')
             perfume_flavours = []
             for f in flavs:
-                flav = f.get_attribute("data-flavor")
+                flav = f.get_attribute('data-flavor')
                 perfume_flavours.append(flav)
-            product_dictionary['flavours']= perfume_flavours
+            product_dictionary['flavours'] = perfume_flavours
 
             top_notes = self.driver.find_element(By.XPATH, '//*[@id="product-page"]/div/div[3]/div/div[6]/div[1]')
-            t_notes = top_notes.find_elements(By.TAG_NAME, "span")
+            t_notes = top_notes.find_elements(By.TAG_NAME, 'span')
             top = []
             for t in t_notes:
-                note = t.get_attribute("data-search")
+                note = t.get_attribute('data-search')
                 top.append(note)
             top = self.clean_list(top)
             product_dictionary['top notes']= top
 
             heart_notes = self.driver.find_element(By.XPATH, '//*[@id="product-page"]/div/div[3]/div/div[6]/div[2]')
-            h_notes = heart_notes.find_elements(By.TAG_NAME, "span")
+            h_notes = heart_notes.find_elements(By.TAG_NAME, 'span')
             heart = []
             for h in h_notes:
-                note2 = h.get_attribute("data-search")
+                note2 = h.get_attribute('data-search')
                 heart.append(note2)
             heart = self.clean_list(heart)
             product_dictionary['heart notes'] = heart
 
             base_notes = self.driver.find_element(By.XPATH, '//*[@id="product-page"]/div/div[3]/div/div[6]/div[3]')
-            b_notes = base_notes.find_elements(By.TAG_NAME, "span")
+            b_notes = base_notes.find_elements(By.TAG_NAME, 'span')
             base = []
             for b in b_notes:
-                note3 = b.get_attribute("data-search")
+                note3 = b.get_attribute('data-search')
                 base.append(note3)
             base = self.clean_list(base)
             product_dictionary['base notes'] = base
@@ -267,17 +267,17 @@ class PerfumeScraper:
             product_dictionary['image link']=image_link
             
         except NoSuchElementException: 
-            product_dictionary['id'] = "None"
-            product_dictionary['price'] = "None"
-            product_dictionary['name'] = "None"
-            product_dictionary['strength'] = "None"
-            product_dictionary['category'] = "None"
-            product_dictionary['brand'] = "None"
-            product_dictionary['flavours'] = ["None"]
-            product_dictionary['top notes'] = ["None"]
-            product_dictionary['heart notes'] = ["None"]
-            product_dictionary['base notes'] = ["None"]
-            product_dictionary['image link'] = "None"
+            product_dictionary['id'] = 'None'
+            product_dictionary['price'] = 'None'
+            product_dictionary['name'] = 'None'
+            product_dictionary['strength'] = 'None'
+            product_dictionary['category'] = 'None'
+            product_dictionary['brand'] = 'None'
+            product_dictionary['flavours'] = ['None']
+            product_dictionary['top notes'] = ['None']
+            product_dictionary['heart notes'] = ['None']
+            product_dictionary['base notes'] = ['None']
+            product_dictionary['image link'] = 'None'
             product_dictionary['href'] = split[1] 
             product_dictionary['complete'] = 'False'
         return(product_dictionary)
@@ -292,28 +292,28 @@ class PerfumeScraper:
         '''
         for url in url_list:
             perfume = self.scrape_product(url)
-            original_dict["href"].append(perfume["href"])
-            original_dict["complete"].append(perfume["complete"])
-            original_dict["uuid"].append(perfume["uuid"])
-            original_dict["name"].append(perfume["name"])
-            original_dict["id"].append(perfume["id"])
-            original_dict["price"].append(perfume["price"])
-            original_dict["strength"].append(perfume["strength"])
-            original_dict["category"].append(perfume["category"])
-            original_dict["brand"].append(perfume["brand"])
-            original_dict["flavours"].append(perfume["flavours"])
-            original_dict["top notes"].append(perfume["top notes"])
-            original_dict["heart notes"].append(perfume["heart notes"])
-            original_dict["base notes"].append(perfume["base notes"])
-            original_dict["image link"].append(perfume["image link"])
+            original_dict['href'].append(perfume['href'])
+            original_dict['complete'].append(perfume['complete'])
+            original_dict['uuid'].append(perfume['uuid'])
+            original_dict['name'].append(perfume['name'])
+            original_dict['id'].append(perfume['id'])
+            original_dict['price'].append(perfume['price'])
+            original_dict['strength'].append(perfume['strength'])
+            original_dict['category'].append(perfume['category'])
+            original_dict['brand'].append(perfume['brand'])
+            original_dict['flavours'].append(perfume['flavours'])
+            original_dict['top notes'].append(perfume['top notes'])
+            original_dict['heart notes'].append(perfume['heart notes'])
+            original_dict['base notes'].append(perfume['base notes'])
+            original_dict['image link'].append(perfume['image link'])
         return original_dict
 
-    def download_image(self, url : str, file_name : str, dir_path : str):
+    def download_image(self, url : str, file_name : str, dir_path : str) -> None:
         '''
         Downloads image from given product url
         Args:
             url: product url
-            file_name: name of file 
+            file_name: name of file once downloaded
             dir_path: name of directory to downloaded to
         
         '''
@@ -331,7 +331,7 @@ class PerfumeScraper:
         except NoSuchElementException:
             pass
 
-    def downloads_multiple_img(self, url_list : list, dir_path : str):
+    def downloads_multiple_img(self, url_list : list, dir_path : str) -> None:
         '''
         Downloads multiple images to the directory path given
         Args:
@@ -339,25 +339,25 @@ class PerfumeScraper:
             dir_path: path to directory to download to
         '''
         for url in url_list:
-            split = url.split("s/")
+            split = url.split('s/')
             href = split[1]
             full_path = dir_path + href +'.jpg'
             if os.path.exists(full_path) == False:
-                self.download_image(url=url, file_name=href, dir_path=dir_path)
+                self.download_image(url = url, file_name = href, dir_path = dir_path)
             else:
                 pass
 
     # MANIPULATING AND STORING THE DATA 
 
-    def dump_json(self, filepath : str, dict : dict, dict_name : str):
+    def dump_json(self, filepath : str, p_dict : dict, dict_name : str) -> None:
         '''
         Stores ditionary as json file
         Args:
-            filepath: path to the directory to store the json
+            filepath: path to the directory to store the json file
             dict: dictionary to be stored
             dict_name: name of json file (must end .json)
         '''
-        with open(os.path.join(filepath, dict_name), mode='w') as f:
+        with open(os.path.join(filepath, dict_name), mode = 'w') as f:
             json.dump(dict, f)
 
     def data_clean(self, dictionary : dict) -> pd.DataFrame:
@@ -366,14 +366,12 @@ class PerfumeScraper:
         Args: dictionary: dictionary to be converted
         Returns: a cleaned dataframe
         '''
-
-        df1 = pd.DataFrame.from_dict(dictionary, orient='index')
+        df1 = pd.DataFrame.from_dict(dictionary, orient = 'index')
         df1 = df1.transpose()
-    
         # data cleaning - strength and volume columns 
         df1['strength'] = df1['strength'].str.split('/')
         sub1 = pd.DataFrame(df1['strength'].tolist())
-        sub1 = sub1.rename({0:'volume', 1:'strengths'}, axis=1)
+        sub1 = sub1.rename({0:'volume', 1:'strengths'}, axis = 1)
         sub1['volume'] = sub1['volume'].str.replace('m','')
         sub1['volume'] = sub1['volume'].str.replace('l','')
         sub1['volume'] = sub1['volume'].str.replace(' ','')
@@ -381,20 +379,16 @@ class PerfumeScraper:
         sub1['strengths'] = sub1['strengths'].str.replace('Parfum', 'Extrait')
         if sub1['volume'].empty:
             sub1['volume'] = sub1['volume'].astype(float)
-
         df2 = pd.concat([df1, sub1], axis=1)
-
         df2.drop(columns=['id'], inplace=True)
         df2.drop(columns=['category'], inplace=True)
         df2.drop(columns=['strength'], inplace=True)
         df2['price'] = df2['price'].str.replace('£','')
         if df2['price'].empty:
             df2['price'] = df2['price'].astype(float)   
-    
         column_order = ['href', 'url', 'uuid', 'name', 'price', 'volume', 'strengths', 'brand', 'flavours', 'top notes',
        'heart notes', 'base notes', 'image link']
-        df2 = df2.reindex(columns=column_order)
-
+        df2 = df2.reindex(columns = column_order)
         return df2
 
     def open_json(self, file_path : str) -> dict:
@@ -423,18 +417,25 @@ class PerfumeScraper:
             data_frame: data to be uploaded
             table_name: RDS table name 
         '''
-        data_frame.to_sql(table_name, self.engine, if_exists='replace')
+        data_frame.to_sql(table_name, con = self.engine, if_exists = 'replace')
 
     def update_table_rds(self, data_frame : pd.DataFrame, table_name : str):
+        '''
+        Appends an RDS table with data stored as a dataframe
+        Args:
+            data_frame: data to be uploaded
+            table_name: RDS table name
+        '''
         data_frame.to_sql(table_name, con = self.engine, if_exists = 'append')
 
     def inspect_rds(self, table_name : str) -> pd.DataFrame:
         '''
-        Reads rds database data into a pandas database
+        Reads whole rds database table into a pandas database
         Args: table_name: table to be inspected
+        Returns: pandas dataframe 
         '''
         try:
-            table_data = pd.read_sql_table(self.table, self.engine)
+            table_data = pd.read_sql_table(self.table, con = self.engine)
         except:
             pass
         # pd.read_sql_query('''SELECT * FROM actor LIMIT 10''', engine)
@@ -442,10 +443,11 @@ class PerfumeScraper:
 
     def sql_rds(self, sql_query : str) -> pd.DataFrame:
         '''
-        Takes in sql query as string
-        Returns pandas dataframe
+        Applies sql statement to the RDS data and returns dataframe
+        Args: sql_query: sql query as string
+        Returns: pandas dataframe
         '''
-        result = pd.read_sql(sql=sql_query, con=self.engine)
+        result = pd.read_sql(sql = sql_query, con = self.engine)
         return result
 
     def key_exists(self, mykey : str, mybucket : str) -> bool:
@@ -457,7 +459,7 @@ class PerfumeScraper:
         Returns: boolean value if the keys exists
         '''
         try:
-            response = self.s3.list_objects_v2(Bucket=mybucket, Prefix=mykey)
+            response = self.s3.list_objects_v2(Bucket = mybucket, Prefix = mykey)
             if response:
                 for obj in response['Contents']:
                     if mykey == obj['Key']:
@@ -487,7 +489,7 @@ class PerfumeScraper:
         '''
         Converts bloom product url to href
         '''
-        split = url.split("s/")
+        split = url.split('s/')
         return split[1]
 
     def href_to_url(self, base_url : str, href : str) -> str:
@@ -500,7 +502,7 @@ class PerfumeScraper:
         '''
         Creates full url from product href
         '''
-        return self.href_to_url(base_url='https://bloomperfume.co.uk/products/', href=href)
+        return self.href_to_url(base_url = 'https://bloomperfume.co.uk/products/', href = href)
 
     def rds_columntolist(self, table : str, column : str) -> list:
         '''
@@ -528,7 +530,7 @@ class PerfumeScraper:
         empty_values = empty_df.href.tolist()
         empty_urls = []
         for href in empty_values:
-            url = self.bloom_href(href=href)
+            url = self.bloom_href(href = href)
             empty_urls.append(url)
         return empty_urls
 
@@ -548,13 +550,14 @@ class PerfumeScraper:
                 s3_noimg.append(url)
             else:
                 pass
-        print("Not on s3: ", len(s3_noimg))
+        print('Not on S3: ', len(s3_noimg))
         return s3_noimg
 
     def url_href_list(self, urls : str) -> list:
         '''
-        Takes list of urls
-        Returns list of hrefs 
+        Takes list of urls, returns list of hrefs
+        Args: urls: list of urls to be converted
+        Returns: list of hrefs 
         '''
         scraped_href_list = []
         for x in urls:
@@ -564,7 +567,7 @@ class PerfumeScraper:
 
     # INTEGRATING THE ABOVE
 
-    def run_scraper(self, start_from, no_pages, RDS=True, S3=False, local=False):
+    def run_scraper(self, start_from, no_pages, RDS = True, S3 = False, local = False):
         '''
         This method integrates the other methods above.
         Args:
@@ -575,7 +578,7 @@ class PerfumeScraper:
 
         '''
         # scrapes the urls of all the products 
-        new_urls = self.get_multiple_links(start_from, no_pages) # 45 maximum 
+        new_urls = self.get_multiple_links(start_from, no_pages) # 49 maximum 
         new_hrefs = self.url_href_list(new_urls)
 
         if RDS:
@@ -584,39 +587,40 @@ class PerfumeScraper:
             Only scrapes products that do not exist on the cloud. 
             '''
             # inspects the cloud database and produces a list of hrefs stored
-            rds_hrefs = self.rds_columntolist(table=self.table, column='href')
+            rds_hrefs = self.rds_columntolist(table = self.table, column = 'href')
             empty_urls = self.rds_check_complete()
-            rds_tobescraped = self.find_rdsunscraped(new_hrefs, rds_hrefs)
+            rds_tobescraped = self.find_rdsunscraped(scraped_href = new_hrefs, rds_href = rds_hrefs)
 
             # scrape the new list and add to empty dictionary
-            new_dict = self.scrape_add(rds_tobescraped, self.dict)
-            combined_dict = self.scrape_add(empty_urls, new_dict)
+            new_dict = self.scrape_add(url_list = rds_tobescraped, original_dict = self.dict)
+            combined_dict = self.scrape_add(url_list = empty_urls, original_dict = new_dict)
 
             # cleans the dictionary and turns into pd dataframe, appends to rds 
             clean_df = self.data_clean(combined_dict)
             clean_df = clean_df[clean_df.href != 'test']
             incomplete = clean_df[clean_df.price == 'None']
             print(f'There are {len(incomplete)} incomplete entries from this scrape')
-            self.update_table_rds(data_frame=clean_df, table_name=self.table)
+            self.update_table_rds(data_frame = clean_df, table_name = self.table)
 
         if S3:
             '''
             Compares images stored on S3 with the newly scraped urls. 
             Only downloads and uploads images that do not exist on S3.  
             '''
-            no_images_s3_urls = self.check_S3(new_hrefs, self.bucket)
+            no_images_s3_urls = self.check_S3(href_list = new_hrefs, s3_bucket = self.bucket)
             if len(no_images_s3_urls) > 1:
-                self.downloads_multiple_img(no_images_s3_urls, self.data_path)
-                print("Downloading images..")
+                self.downloads_multiple_img(url_list = no_images_s3_urls, dir_path = self.data_path)
+                print('Downloading images..')
                 self.upload_directory(self.data_path)
             elif len(no_images_s3_urls) == 1:
-                filename = str(no_images_s3_urls[0])
-                self.download_image(filename, self.data_path)
-                print("Downloading image..")
+                url = str(no_images_s3_urls[0])
+                filename = self.url_to_href(url)
+                self.download_image(url = url, file_name = filename, dir_path = self.data_path)
+                print('Downloading image..')
                 self.upload_directory(self.data_path)
             else:
                 pass
-            print("Uploading folder to S3...")
+            print('Uploading folder to S3...')
 
         if local:
             '''
@@ -639,14 +643,14 @@ class PerfumeScraper:
                 updated_dict = self.scrape_add(dict_url_list, stored_dict)
             else:
                 updated_dict = self.scrape_add(new_urls, self.dict)
-            self.dump_json(self.data_path, updated_dict, local_data)
-            print("Storing data locally...")
+            self.dump_json(filepath = self.data_path, p_dict = updated_dict, dict_name = local_data)
+            print('Storing data locally...')
 
-        print("Job complete")
-        print("-------------------")
+        print('Job complete')
+        print('-------------------')
         self.close_webpage()
 
 if __name__ == '__main__':      
-    my_scraper = PerfumeScraper("https://bloomperfume.co.uk/collections/perfumes", container=False)
-    my_scraper.run_scraper(start_from=1, no_pages=1, RDS=False, S3=False, local=True)
+    my_scraper = PerfumeScraper('https://bloomperfume.co.uk/collections/perfumes', container = False)
+    my_scraper.run_scraper(start_from = 1, no_pages = 1, RDS = False, S3 = False, local = True)
     my_scraper.close_webpage()
